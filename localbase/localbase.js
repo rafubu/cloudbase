@@ -1,4 +1,5 @@
 "use strict"
+import localForage from "localforage";
 
 // import api methods
 import collection from './api/selectors/collection.js'
@@ -19,12 +20,27 @@ import uid from './api-utils/uid.js'
 import Connection from './utils/conecction.js'
 import where from './api/filters/where.js'
 
+// observer
+import on from './api/observer/on.js'
+import off from './api/observer/off.js'
+
+import mitt from 'mitt'
+
 // Localbase
 export default class Localbase {
+
+  static internalDb = localForage.createInstance({
+    driver: localForage.INDEXEDDB,
+    name: 'localbase',
+    storeName: 'internal'
+  });
+
+  static events = mitt()
   constructor(dbName, config = null) {
 
     // properties
     this.dbName = dbName
+
     this.lf = {} // where we store our localForage instances
     this.collectionName = null
     this.orderByProperty = null
@@ -69,6 +85,10 @@ export default class Localbase {
     this.set = set.bind(this);
     this.delete = deleteIt.bind(this);
 
+    // api - observer
+    this.on = on.bind(this)
+    this.off = off.bind(this)
+
     this.cache = {}
     this.time = 0
 
@@ -81,26 +101,27 @@ export default class Localbase {
     });
 
     if (!!config) {
-      if(!config.url) this.resolverPromesa()
-      try {
-        const con = new Connection(config.url);
-        this.socket = con.socket;
-        const onOpen = () => {
-          console.log('conectado');
-          this.socket.isOpened = true;
-          this.resolverPromesa()
-        }
-        this.socket.addEventListener('open',onOpen );
-        this.socket.onerror = (error) => {
-          console.log('error');
-          this.socket.removeEventListener('open',onOpen)
-          this.resolverPromesa()
-        }
-      } catch (error) {
-        
-      }
+      if (!config.url) {
+        this.resolverPromesa()
+      } else {
+        try {
+          const con = new Connection(config.url);
+          this.socket = con.socket;
+          const onOpen = () => {
+            console.log('conectado');
+            this.socket.isOpened = true;
+          }
+          this.socket.addEventListener('open', onOpen);
+          this.socket.onerror = (error) => {
+            console.log('error', error.message);
+            this.socket.removeEventListener('open', onOpen)
+            this.resolverPromesa()
+          }
+        } catch (error) {
 
-    } else  try {this.resolverPromesa()} catch (e) {}
+        }
+      }
+    } else try { this.resolverPromesa() } catch (e) { }
   }
 
   async conected() {
@@ -108,15 +129,15 @@ export default class Localbase {
   }
 
   change(collection, action, data, key) {
-    if (!!this.socket && this.socket.isOpened) this.socket.send(`change:${collection}:${action}:${key}:=>${JSON.stringify(data)}`,true);
-    Localbase.onChange({ database: this.dbName, collection, action, data, key })
-    if (!!key) {
-      Localbase.onChangeDoc({ key, action, data });
-    }
-  }
 
-  static onChange(movimiento) {}
-  static onChangeDoc(movimiento) { }
+    if (!!this.socket && this.socket.isOpened) this.socket.send(`${this.dbName}:${collection}:${action}:${key}:=>${JSON.stringify(data)}`, true);
+
+    if (!!key) {
+      Localbase.events.emit(`doc:${key}`, { action, data })
+    }
+
+    Localbase.events.emit(`db:${this.dbName}:col:${collection}`, { key, action, data })
+  }
 
   /**
    * Returns a function that increments a given number by a specified amount.
@@ -139,7 +160,7 @@ export default class Localbase {
   static arrayUnion(data) {
     return (array) => {
       if (!Array.isArray(array)) return array;
-      
+
       const index = array.findIndex((element) => Bun.deepEquals(element, data, true));
 
       if (index === -1) {
@@ -170,11 +191,11 @@ export default class Localbase {
     }
   }
 
-  static toTimestamp(){
+  static toTimestamp() {
     return Date.now();
   }
 
-  static toDateString(timestamp){
+  static toDateString(timestamp) {
     return new Date(timestamp).toLocaleDateString();
   }
 }
