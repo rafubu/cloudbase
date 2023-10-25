@@ -10,7 +10,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 var _default = exports["default"] = _localbase["default"];
 module.exports = exports.default;
 
-},{"./localbase/localbase.js":23}],2:[function(require,module,exports){
+},{"./localbase/localbase.js":25}],2:[function(require,module,exports){
 "use strict";
 
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
@@ -196,7 +196,7 @@ function error(message) {
 }
 module.exports = exports.default;
 
-},{"../api-utils/reset.js":6,"../utils/logger.js":26}],5:[function(require,module,exports){
+},{"../api-utils/reset.js":6,"../utils/logger.js":28}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -299,7 +299,7 @@ function showUserErrors() {
 }
 module.exports = exports.default;
 
-},{"../utils/logger.js":26,"./reset.js":6}],9:[function(require,module,exports){
+},{"../utils/logger.js":28,"./reset.js":6}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -320,7 +320,7 @@ function success(message, data) {
 }
 module.exports = exports.default;
 
-},{"../api-utils/reset.js":6,"../utils/logger.js":26}],10:[function(require,module,exports){
+},{"../api-utils/reset.js":6,"../utils/logger.js":28}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -334,7 +334,7 @@ function _default() {
 }
 module.exports = exports.default;
 
-},{"uuid":30}],11:[function(require,module,exports){
+},{"uuid":33}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -440,7 +440,7 @@ function add(data, keyProvided, keys) {
 }
 module.exports = exports.default;
 
-},{"../../api-utils/StringInObject.js":2,"../../api-utils/error.js":4,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../utils/logger.js":26,"fuzzysort":28,"uuid":30}],12:[function(require,module,exports){
+},{"../../api-utils/StringInObject.js":2,"../../api-utils/error.js":4,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../utils/logger.js":28,"fuzzysort":30,"uuid":33}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -583,7 +583,7 @@ function deleteIt() {
 }
 module.exports = exports.default;
 
-},{"../../api-utils/error.js":4,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../localbase.js":23,"../../utils/isSubset.js":25,"../../utils/logger.js":26}],13:[function(require,module,exports){
+},{"../../api-utils/error.js":4,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../localbase.js":25,"../../utils/isSubset.js":27,"../../utils/logger.js":28}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -780,7 +780,7 @@ function get() {
 }
 module.exports = exports.default;
 
-},{"../../api-utils/cumpleCriterio.js":3,"../../api-utils/reset.js":6,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../utils/isSubset.js":25,"../../utils/logger.js":26,"fuzzysort":28}],14:[function(require,module,exports){
+},{"../../api-utils/cumpleCriterio.js":3,"../../api-utils/reset.js":6,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../utils/isSubset.js":27,"../../utils/logger.js":28,"fuzzysort":30}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -934,7 +934,7 @@ function _search() {
 }
 module.exports = exports.default;
 
-},{"../../api-utils/StringInObject.js":2,"../../api-utils/reset.js":6,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../utils/logger.js":26,"fuzzysort":28}],15:[function(require,module,exports){
+},{"../../api-utils/StringInObject.js":2,"../../api-utils/reset.js":6,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../utils/logger.js":28,"fuzzysort":30}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1063,7 +1063,7 @@ function set(newDocument) {
 }
 module.exports = exports.default;
 
-},{"../../api-utils/error.js":4,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../utils/isSubset.js":25,"../../utils/logger.js":26}],16:[function(require,module,exports){
+},{"../../api-utils/error.js":4,"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../utils/isSubset.js":27,"../../utils/logger.js":28}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1164,7 +1164,6 @@ function update(docUpdates) {
       _this.userErrors.push('Data passed to .update() must be an object. Not an array, string, number or boolean.');
     }
     if (!_this.userErrors.length) {
-      console.log('docSelectionCriteria', docSelectionCriteria);
       if (_typeof(docSelectionCriteria) == 'object') {
         if (docSelectionCriteria !== null) {
           _this.updateDocumentByCriteria();
@@ -1181,7 +1180,7 @@ function update(docUpdates) {
 }
 module.exports = exports.default;
 
-},{"../../api-utils/cumpleCriterio.js":3,"../../api-utils/error.js":4,"../../api-utils/isValidFunctionAndExecute.js":5,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../utils/isSubset.js":25,"../../utils/logger.js":26,"../../utils/updateObject.js":27}],17:[function(require,module,exports){
+},{"../../api-utils/cumpleCriterio.js":3,"../../api-utils/error.js":4,"../../api-utils/isValidFunctionAndExecute.js":5,"../../api-utils/showUserErrors.js":8,"../../api-utils/success.js":9,"../../utils/isSubset.js":27,"../../utils/logger.js":28,"../../utils/updateObject.js":29}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1279,6 +1278,90 @@ module.exports = exports.default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports["default"] = off;
+var _selectionLevel = _interopRequireDefault(require("../../api-utils/selectionLevel.js"));
+var _showUserErrors = _interopRequireDefault(require("../../api-utils/showUserErrors.js"));
+var _localbase = _interopRequireDefault(require("../../localbase.js"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function off(callback) {
+  var _this = this;
+  this.onCollection = function () {
+    var collectionName = _this.collectionName;
+    var dbName = _this.dbName;
+    _localbase["default"].events.off("db:".concat(dbName, ":col:").concat(collectionName), callback);
+  };
+  this.onDocument = function () {
+    var docSelectionCriteria = _this.docSelectionCriteria;
+    if (typeof docSelectionCriteria !== 'string') throw new Error('no se especifico el documento a observar');
+    _localbase["default"].events.off("doc:".concat(docSelectionCriteria), callback);
+  };
+
+  // check for user errors
+  if (!(typeof callback == 'function')) {
+    this.userErrors.push('Callback passed to off() method must be a function');
+  }
+  if (!this.userErrors.length) {
+    var currentSelectionLevel = _selectionLevel["default"].call(this);
+    if (currentSelectionLevel == 'collection') {
+      return this.onCollection();
+    } else if (currentSelectionLevel == 'doc') {
+      return this.onDocument();
+    }
+  } else {
+    _showUserErrors["default"].call(this);
+    return null;
+  }
+}
+module.exports = exports.default;
+
+},{"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../localbase.js":25}],22:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = on;
+var _selectionLevel = _interopRequireDefault(require("../../api-utils/selectionLevel.js"));
+var _showUserErrors = _interopRequireDefault(require("../../api-utils/showUserErrors.js"));
+var _localbase = _interopRequireDefault(require("../../localbase.js"));
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function on(callback) {
+  var _this = this;
+  this.onCollection = function () {
+    var collectionName = _this.collectionName;
+    var dbName = _this.dbName;
+    _localbase["default"].events.on("db:".concat(dbName, ":col:").concat(collectionName), callback);
+  };
+  this.onDocument = function () {
+    var docSelectionCriteria = _this.docSelectionCriteria;
+    if (typeof docSelectionCriteria !== 'string') throw new Error('no se especifico el documento a observar');
+    _localbase["default"].events.on("doc:".concat(docSelectionCriteria), callback);
+  };
+
+  // check for user errors
+  if (!(typeof callback == 'function')) {
+    this.userErrors.push('Callback passed to on() method must be a function');
+  }
+  if (!this.userErrors.length) {
+    var currentSelectionLevel = _selectionLevel["default"].call(this);
+    if (currentSelectionLevel == 'collection') {
+      return this.onCollection();
+    } else if (currentSelectionLevel == 'doc') {
+      return this.onDocument();
+    }
+  } else {
+    _showUserErrors["default"].call(this);
+    return null;
+  }
+}
+module.exports = exports.default;
+
+},{"../../api-utils/selectionLevel.js":7,"../../api-utils/showUserErrors.js":8,"../../localbase.js":25}],23:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports["default"] = collection;
 var _localforage = _interopRequireDefault(require("localforage"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
@@ -1307,7 +1390,7 @@ function collection(collectionName) {
 }
 module.exports = exports.default;
 
-},{"localforage":29}],22:[function(require,module,exports){
+},{"localforage":31}],24:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1327,14 +1410,14 @@ function doc(docSelectionCriteria) {
 }
 module.exports = exports.default;
 
-},{}],23:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 "use strict";
 
-// import api methods
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports["default"] = void 0;
+var _localforage = _interopRequireDefault(require("localforage"));
 var _collection = _interopRequireDefault(require("./api/selectors/collection.js"));
 var _doc = _interopRequireDefault(require("./api/selectors/doc.js"));
 var _orderBy = _interopRequireDefault(require("./api/filters/orderBy.js"));
@@ -1349,6 +1432,9 @@ var _search = _interopRequireDefault(require("./api/actions/search.js"));
 var _uid = _interopRequireDefault(require("./api-utils/uid.js"));
 var _conecction = _interopRequireDefault(require("./utils/conecction.js"));
 var _where = _interopRequireDefault(require("./api/filters/where.js"));
+var _on = _interopRequireDefault(require("./api/observer/on.js"));
+var _off = _interopRequireDefault(require("./api/observer/off.js"));
+var _mitt = _interopRequireDefault(require("mitt"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw new Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator["return"] && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw new Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, "catch": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
@@ -1357,8 +1443,11 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
-function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); } //filter
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); } // import api methods
+//filter
+// observer
 // Localbase
 var Localbase = exports["default"] = /*#__PURE__*/function () {
   function Localbase(dbName) {
@@ -1409,6 +1498,10 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
     this.update = _update["default"].bind(this);
     this.set = _set["default"].bind(this);
     this["delete"] = _delete["default"].bind(this);
+
+    // api - observer
+    this.on = _on["default"].bind(this);
+    this.off = _off["default"].bind(this);
     this.cache = {};
     this.time = 0;
     this.search = _search["default"].bind(this);
@@ -1420,22 +1513,24 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
     });
 
     if (!!config) {
-      if (!config.url) this.resolverPromesa();
-      try {
-        var con = new _conecction["default"](config.url);
-        this.socket = con.socket;
-        var onOpen = function onOpen() {
-          console.log('conectado');
-          _this.socket.isOpened = true;
-          _this.resolverPromesa();
-        };
-        this.socket.addEventListener('open', onOpen);
-        this.socket.onerror = function (error) {
-          console.log('error');
-          _this.socket.removeEventListener('open', onOpen);
-          _this.resolverPromesa();
-        };
-      } catch (error) {}
+      if (!config.url) {
+        this.resolverPromesa();
+      } else {
+        try {
+          var con = new _conecction["default"](config.url);
+          this.socket = con.socket;
+          var onOpen = function onOpen() {
+            console.log('conectado');
+            _this.socket.isOpened = true;
+          };
+          this.socket.addEventListener('open', onOpen);
+          this.socket.onerror = function (error) {
+            console.log('error', error.message);
+            _this.socket.removeEventListener('open', onOpen);
+            _this.resolverPromesa();
+          };
+        } catch (error) {}
+      }
     } else try {
       this.resolverPromesa();
     } catch (e) {}
@@ -1462,35 +1557,26 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
   }, {
     key: "change",
     value: function change(collection, action, data, key) {
-      if (!!this.socket && this.socket.isOpened) this.socket.send("change:".concat(collection, ":").concat(action, ":").concat(key, ":=>").concat(JSON.stringify(data)), true);
-      Localbase.onChange({
-        database: this.dbName,
-        collection: collection,
-        action: action,
-        data: data,
-        key: key
-      });
+      if (!!this.socket && this.socket.isOpened) this.socket.send("".concat(this.dbName, ":").concat(collection, ":").concat(action, ":").concat(key, ":=>").concat(JSON.stringify(data)), true);
       if (!!key) {
-        Localbase.onChangeDoc({
-          key: key,
+        Localbase.events.emit("doc:".concat(key), {
           action: action,
           data: data
         });
       }
+      Localbase.events.emit("db:".concat(this.dbName, ":col:").concat(collection), {
+        key: key,
+        action: action,
+        data: data
+      });
     }
-  }], [{
-    key: "onChange",
-    value: function onChange(movimiento) {}
-  }, {
-    key: "onChangeDoc",
-    value: function onChangeDoc(movimiento) {}
 
     /**
      * Returns a function that increments a given number by a specified amount.
      * @param {number} cuanto - The amount to increment the number by.
      * @returns {function} A function that takes a number and returns the incremented value.
      */
-  }, {
+  }], [{
     key: "increment",
     value: function increment(cuanto) {
       if (typeof cuanto !== 'number') return function (valor) {
@@ -1556,9 +1642,15 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
   }]);
   return Localbase;
 }();
+_defineProperty(Localbase, "internalDb", _localforage["default"].createInstance({
+  driver: _localforage["default"].INDEXEDDB,
+  name: 'localbase',
+  storeName: 'internal'
+}));
+_defineProperty(Localbase, "events", (0, _mitt["default"])());
 module.exports = exports.default;
 
-},{"./api-utils/uid.js":10,"./api/actions/add.js":11,"./api/actions/delete.js":12,"./api/actions/get.js":13,"./api/actions/search.js":14,"./api/actions/set.js":15,"./api/actions/update.js":16,"./api/filters/contains.js":17,"./api/filters/limit.js":18,"./api/filters/orderBy.js":19,"./api/filters/where.js":20,"./api/selectors/collection.js":21,"./api/selectors/doc.js":22,"./utils/conecction.js":24}],24:[function(require,module,exports){
+},{"./api-utils/uid.js":10,"./api/actions/add.js":11,"./api/actions/delete.js":12,"./api/actions/get.js":13,"./api/actions/search.js":14,"./api/actions/set.js":15,"./api/actions/update.js":16,"./api/filters/contains.js":17,"./api/filters/limit.js":18,"./api/filters/orderBy.js":19,"./api/filters/where.js":20,"./api/observer/off.js":21,"./api/observer/on.js":22,"./api/selectors/collection.js":23,"./api/selectors/doc.js":24,"./utils/conecction.js":26,"localforage":31,"mitt":32}],26:[function(require,module,exports){
 "use strict";
 
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
@@ -1580,7 +1672,7 @@ var d = m;
 var k = exports["default"] = d;
 module.exports = exports.default;
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1598,7 +1690,7 @@ function isSubset(superObj, subObj) {
 }
 module.exports = exports.default;
 
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1638,7 +1730,7 @@ var logger = {
 var _default = exports["default"] = logger;
 module.exports = exports.default;
 
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1660,7 +1752,7 @@ function updateObject(obj /*, …*/) {
 }
 module.exports = exports.default;
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 // https://github.com/farzher/fuzzysort v2.0.4
 /*
   SublimeText-like Fuzzy Search
@@ -2224,7 +2316,7 @@ module.exports = exports.default;
 // TODO: (like sublime) backslash === forwardslash
 // TODO: (perf) prepareSearch seems slow
 
-},{}],29:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 (function (global){(function (){
 /*!
     localForage -- Offline Storage, Improved
@@ -5044,7 +5136,11 @@ module.exports = localforage_js;
 });
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
+module.exports=function(n){return{all:n=n||new Map,on:function(e,t){var i=n.get(e);i?i.push(t):n.set(e,[t])},off:function(e,t){var i=n.get(e);i&&(t?i.splice(i.indexOf(t)>>>0,1):n.set(e,[]))},emit:function(e,t){var i=n.get(e);i&&i.slice().map(function(n){n(t)}),(i=n.get("*"))&&i.slice().map(function(n){n(e,t)})}}};
+
+
+},{}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5124,7 +5220,7 @@ var _stringify = _interopRequireDefault(require("./stringify.js"));
 var _parse = _interopRequireDefault(require("./parse.js"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./nil.js":33,"./parse.js":34,"./stringify.js":38,"./v1.js":39,"./v3.js":40,"./v4.js":42,"./v5.js":43,"./validate.js":44,"./version.js":45}],31:[function(require,module,exports){
+},{"./nil.js":36,"./parse.js":37,"./stringify.js":41,"./v1.js":42,"./v3.js":43,"./v4.js":45,"./v5.js":46,"./validate.js":47,"./version.js":48}],34:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5348,7 +5444,7 @@ function md5ii(a, b, c, d, x, s, t) {
 
 var _default = md5;
 exports.default = _default;
-},{}],32:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5360,7 +5456,7 @@ var _default = {
   randomUUID
 };
 exports.default = _default;
-},{}],33:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5369,7 +5465,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _default = '00000000-0000-0000-0000-000000000000';
 exports.default = _default;
-},{}],34:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5415,7 +5511,7 @@ function parse(uuid) {
 
 var _default = parse;
 exports.default = _default;
-},{"./validate.js":44}],35:[function(require,module,exports){
+},{"./validate.js":47}],38:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5424,7 +5520,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
 exports.default = _default;
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5450,7 +5546,7 @@ function rng() {
 
   return getRandomValues(rnds8);
 }
-},{}],37:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5555,7 +5651,7 @@ function sha1(bytes) {
 
 var _default = sha1;
 exports.default = _default;
-},{}],38:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5600,7 +5696,7 @@ function stringify(arr, offset = 0) {
 
 var _default = stringify;
 exports.default = _default;
-},{"./validate.js":44}],39:[function(require,module,exports){
+},{"./validate.js":47}],42:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5708,7 +5804,7 @@ function v1(options, buf, offset) {
 
 var _default = v1;
 exports.default = _default;
-},{"./rng.js":36,"./stringify.js":38}],40:[function(require,module,exports){
+},{"./rng.js":39,"./stringify.js":41}],43:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5725,7 +5821,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const v3 = (0, _v.default)('v3', 0x30, _md.default);
 var _default = v3;
 exports.default = _default;
-},{"./md5.js":31,"./v35.js":41}],41:[function(require,module,exports){
+},{"./md5.js":34,"./v35.js":44}],44:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5806,7 +5902,7 @@ function v35(name, version, hashfunc) {
   generateUUID.URL = URL;
   return generateUUID;
 }
-},{"./parse.js":34,"./stringify.js":38}],42:[function(require,module,exports){
+},{"./parse.js":37,"./stringify.js":41}],45:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5850,7 +5946,7 @@ function v4(options, buf, offset) {
 
 var _default = v4;
 exports.default = _default;
-},{"./native.js":32,"./rng.js":36,"./stringify.js":38}],43:[function(require,module,exports){
+},{"./native.js":35,"./rng.js":39,"./stringify.js":41}],46:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5867,7 +5963,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const v5 = (0, _v.default)('v5', 0x50, _sha.default);
 var _default = v5;
 exports.default = _default;
-},{"./sha1.js":37,"./v35.js":41}],44:[function(require,module,exports){
+},{"./sha1.js":40,"./v35.js":44}],47:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5885,7 +5981,7 @@ function validate(uuid) {
 
 var _default = validate;
 exports.default = _default;
-},{"./regex.js":35}],45:[function(require,module,exports){
+},{"./regex.js":38}],48:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5907,5 +6003,5 @@ function version(uuid) {
 
 var _default = version;
 exports.default = _default;
-},{"./validate.js":44}]},{},[1])(1)
+},{"./validate.js":47}]},{},[1])(1)
 });

@@ -104,7 +104,6 @@ export default function update(docUpdates) {
     }
 
     if (!this.userErrors.length) {
-      console.log('docSelectionCriteria', docSelectionCriteria)
       if (typeof docSelectionCriteria == 'object') {
         if (docSelectionCriteria !== null) {
           this.updateDocumentByCriteria()

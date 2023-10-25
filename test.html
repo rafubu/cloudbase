@@ -10,22 +10,19 @@
 <body>
   <script>
   async function tested() {
-   /*  Localbase.onChange = ( movimiento ) => {
-      console.log( 'DB', movimiento )
-    }
-
-    Localbase.onChangeDoc = ( movimiento ) => {
-      console.log( 'DOCUMENT', movimiento )
-    } */
   
     try {
       
       const a = new Array(10).fill('hello')
     
-      const db = new Localbase('example',{url:'ws://localhost:4000/listen'})
+      const db = new Localbase('example',/* {url:'ws://localhost:4000/listen'} */)
   
       // para esperar la coneccion con el socket
       await db.conected();
+
+      db.collection('test').on(( { action, data } )=>{
+        console.log('ON: ACTION',action,'DATA',data)
+      })
     
       //add to key provista
       await db.collection('test').add({nombre:'CHUP',apellido:'rozas'},'1')
