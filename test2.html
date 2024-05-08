@@ -5,43 +5,23 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <script src="./out/index.js" type="module"></script>
+  <script src="./out/index.js"></script>
 </head>
 <body>
-  <script type="module">
-  import * as Rebase from './out/index.js';
-
-  const { Localbase, Cloud } = Rebase;
-
-  
-
-  const db = new Localbase('tested');
-  const cloud = new Cloud({key:'rafita',host:'peer.app-re.online'}, Localbase );
-  await cloud.init();
-  console.log('ID',cloud.myId())
-
-  if(cloud.myId() !== '86dee410-e056-47f4-be9d-fb60de29f017'){
-    await cloud.addNode('86dee410-e056-47f4-be9d-fb60de29f017');
-    console.log('master')
-    const datas = await db.collection('test').get({keys:true});
-    console.log('DATAS',datas)
-    datas.forEach(async data => {
-      await db.collection('test').doc(data.key).update({direccion:'calle falsa 123', telefono: 1234567890});
-    });
-  }
-  
+  <script>
   async function tested() {
   
     try {
-      //const a = new Array(10).fill('hello')
-
-      // {url:'ws://localhost:4000/listen',peer:{ host:'peer.app-re.online', key:'rafita'}}
+      const a = new Array(10).fill('hello')
     
-      //const db = new Localbase('example');
+      const db = new Localbase('example',{url:'ws://localhost:4000/listen'})
+  
+      // para esperar la coneccion con el socket
+      await db.conected();
 
-      /* db.collection('test').on(( { action, data } )=>{
+      db.collection('test').on(( { action, data } )=>{
         console.log('ON: ACTION',action,'DATA',data)
-      }) */
+      })
 
       //4390c0c0-cf3c-45e3-9ea3-0782c66a8842
     
@@ -49,7 +29,7 @@
      /*  await db.collection('test').add({nombre:'CHUP',apellido:'rozas'},'1')
       await db.collection('test').add({nombre:'CHUP'},'2') */
   
-      //console.log('UID: ',db.uid())
+      console.log('UID: ',db.uid())
     
         //update to key
         //await db.collection('test').doc('1').update({nombre:'CHUP@'});
@@ -62,11 +42,11 @@
         const element = a[index];
         await db.collection('test').add({nombre:element+' '+index})
       } */
-     /*  const tested2 = await db.collection('test').search('chup');
-      await db.collection('test').search('chup'); */
+      const tested2 = await db.collection('test').search('chup');
+      await db.collection('test').search('chup');
   
       // get where find
-      //console.log('------------------------- WHERE -------------------------')
+      console.log('------------------------- WHERE -------------------------')
      /*  await db.collection('test').where({ nombre:'hello 0' }).get();
       await db.collection('test').where({ nombre_lt:'hello' }).get();
       await db.collection('test').where({ nombre_lte:'hello' }).get();
@@ -76,26 +56,26 @@
   
       await db.collection('test').where({ nombre_ne:'hello' }).get(); */
   
-      //console.log('------------------------- INCREMENTER -------------------------')
+      console.log('------------------------- INCREMENTER -------------------------')
      /*  await db.collection('test').where({ nombre:'hello 1' }).update({valor: Localbase.increment(500)});
       await db.collection('test').where({ nombre:'hello 2' }).update({valor: Localbase.increment(-500)});
   
       await db.collection('test').where({ nombre:'hello 1' }).get({keys:true});
       await db.collection('test').where({ nombre:'hello 2' }).get({keys:true});
    */
-      //console.log('------------------------- ARRAYUNION -------------------------')
+      console.log('------------------------- ARRAYUNION -------------------------')
       /* await db.collection('test').where({ nombre:'hello 1' }).update({valor: Localbase.arrayUnion({like:true})});
       await db.collection('test').where({ nombre:'hello 2' }).update({valor: Localbase.arrayUnion({like:false})});
       await db.collection('test').where({ nombre:'hello 1' }).get({keys:true});
       await db.collection('test').where({ nombre:'hello 2' }).get({keys:true}); */
   
-      //console.log('------------------------- ARRAYREMOVE -------------------------')
+      console.log('------------------------- ARRAYREMOVE -------------------------')
     /*   await db.collection('test').where({ nombre:'hello 1' }).update({valor: Localbase.arrayRemove({like:true})});
       await db.collection('test').where({ nombre:'hello 2' }).update({valor: Localbase.arrayRemove({like:false})});
       await db.collection('test').where({ nombre:'hello 1' }).get({keys:true});
       await db.collection('test').where({ nombre:'hello 2' }).get({keys:true}); */
   
-    //console.log('-------------------------- SEARCH -------------------------')
+    console.log('-------------------------- SEARCH -------------------------')
       /* setTimeout(async ()=> {
         const tested2 = await db.collection('test').search('roza');
         console.log({tested2})
@@ -118,9 +98,11 @@
     } catch (error) {
       console.trace(error)
     }
+
+    //maaaaaaaaaaaaa12345678910
     
   }
-  //tested();
+  tested();
   </script>
 </body>
 </html>

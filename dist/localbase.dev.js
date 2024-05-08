@@ -1448,12 +1448,11 @@ function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _ty
 function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); } // import api methods
 //filter
 // observer
-// Localbase
-var Localbase = exports["default"] = /*#__PURE__*/function () {
-  function Localbase(dbName) {
+var CloudLocalbase = exports["default"] = /*#__PURE__*/function () {
+  function CloudLocalbase(dbName) {
     var _this = this;
     var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-    _classCallCheck(this, Localbase);
+    _classCallCheck(this, CloudLocalbase);
     // properties
     this.dbName = dbName;
     this.lf = {}; // where we store our localForage instances
@@ -1535,7 +1534,7 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
       this.resolverPromesa();
     } catch (e) {}
   }
-  _createClass(Localbase, [{
+  _createClass(CloudLocalbase, [{
     key: "conected",
     value: function () {
       var _conected = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
@@ -1559,12 +1558,12 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
     value: function change(collection, action, data, key) {
       if (!!this.socket && this.socket.isOpened) this.socket.send("".concat(this.dbName, ":").concat(collection, ":").concat(action, ":").concat(key, ":=>").concat(JSON.stringify(data)), true);
       if (!!key) {
-        Localbase.events.emit("doc:".concat(key), {
+        CloudLocalbase.events.emit("doc:".concat(key), {
           action: action,
           data: data
         });
       }
-      Localbase.events.emit("db:".concat(this.dbName, ":col:").concat(collection), {
+      CloudLocalbase.events.emit("db:".concat(this.dbName, ":col:").concat(collection), {
         key: key,
         action: action,
         data: data
@@ -1640,14 +1639,14 @@ var Localbase = exports["default"] = /*#__PURE__*/function () {
       return new Date(timestamp).toLocaleDateString();
     }
   }]);
-  return Localbase;
+  return CloudLocalbase;
 }();
-_defineProperty(Localbase, "internalDb", _localforage["default"].createInstance({
+_defineProperty(CloudLocalbase, "internalDb", _localforage["default"].createInstance({
   driver: _localforage["default"].INDEXEDDB,
   name: 'localbase',
   storeName: 'internal'
 }));
-_defineProperty(Localbase, "events", (0, _mitt["default"])());
+_defineProperty(CloudLocalbase, "events", (0, _mitt["default"])());
 module.exports = exports.default;
 
 },{"./api-utils/uid.js":10,"./api/actions/add.js":11,"./api/actions/delete.js":12,"./api/actions/get.js":13,"./api/actions/search.js":14,"./api/actions/set.js":15,"./api/actions/update.js":16,"./api/filters/contains.js":17,"./api/filters/limit.js":18,"./api/filters/orderBy.js":19,"./api/filters/where.js":20,"./api/observer/off.js":21,"./api/observer/on.js":22,"./api/selectors/collection.js":23,"./api/selectors/doc.js":24,"./utils/conecction.js":26,"localforage":31,"mitt":32}],26:[function(require,module,exports){

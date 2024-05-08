@@ -6,6 +6,7 @@ import error from '../../api-utils/error.js'
 import showUserErrors from '../../api-utils/showUserErrors.js'
 import isValidFuntionAnExecute from '../../api-utils/isValidFunctionAndExecute.js'
 import cumpleCriterios from '../../api-utils/cumpleCriterio.js'
+import { ACTIONS } from '../../api-utils/Constant.js'
 
 export default function update(docUpdates) {
   let collectionName = this.collectionName
@@ -21,7 +22,7 @@ export default function update(docUpdates) {
       let docsToUpdate = []
       this.lf[collectionName].iterate((value, key) => {
         let oldDocument = value;
-        const dataAUpdated = isValidFuntionAnExecute(docUpdates, oldDocument);
+        const dataAUpdated = isValidFuntionAnExecute.call(this,docUpdates, oldDocument);
         if (!isWhere) {
           if (isSubset(dataAUpdated, docSelectionCriteria)) {
             let newDocument = updateObject(value, dataAUpdated)
@@ -46,7 +47,8 @@ export default function update(docUpdates) {
       }).then(() => {
         docsToUpdate.forEach((docToUpdate, index) => {
           this.lf[collectionName].setItem(docToUpdate.key, docToUpdate.newDocument).then(value => {
-            this.change(collectionName, 'UPDATE', { ...docToUpdate }, docToUpdate.key)
+
+            this.change(collectionName, ACTIONS.UPDATE, { ...docToUpdate }, docToUpdate.key)
             if (index === (docsToUpdate.length - 1)) {
               resolve(
                 success.call(
@@ -73,11 +75,15 @@ export default function update(docUpdates) {
     this.updateDocumentByKey = () => {
       let docToUpdate = { key: docSelectionCriteria }
       this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
-        docToUpdate = { oldDocument: value };
-        const dataAUpdated = isValidFuntionAnExecute(docUpdates, docToUpdate.oldDocument);
+        docToUpdate.oldDocument = value ;
+        const dataAUpdated = isValidFuntionAnExecute.call( this, docUpdates, docToUpdate.oldDocument);
+        
         docToUpdate.newDocument = updateObject(JSON.parse(JSON.stringify(docToUpdate.oldDocument)), dataAUpdated);
+
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument)
-        this.change(collectionName, 'UPDATE', docToUpdate, docToUpdate.key)
+
+        this.change(collectionName, ACTIONS.UPDATE, docToUpdate, docToUpdate.key)
+
         resolve(
           success.call(
             this,

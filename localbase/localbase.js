@@ -1,5 +1,6 @@
 "use strict"
 import localForage from "localforage";
+import { increment, arrayRemove, arrayUnion } from './api/actions/preactions.js'
 
 // import api methods
 import collection from './api/selectors/collection.js'
@@ -17,7 +18,6 @@ import set from './api/actions/set.js'
 import deleteIt from './api/actions/delete.js'
 import search from './api/actions/search.js'
 import uid from './api-utils/uid.js'
-import Connection from './utils/conecction.js'
 import where from './api/filters/where.js'
 
 // observer
@@ -25,18 +25,24 @@ import on from './api/observer/on.js'
 import off from './api/observer/off.js'
 
 import mitt from 'mitt'
+import { ACTIONS } from "./api-utils/Constant.js";
 
-// Localbase
-export default class Localbase {
+export default class CloudLocalbase {
 
-  static internalDb = localForage.createInstance({
+  static iDB = localForage.createInstance({
     driver: localForage.INDEXEDDB,
     name: 'localbase',
     storeName: 'internal'
   });
 
+  static transacciones = localForage.createInstance({
+    driver: localForage.INDEXEDDB,
+    name: 'localbase',
+    storeName: 'transacciones'
+  });
+
   static events = mitt()
-  constructor(dbName, config = null) {
+  constructor(dbName) {
 
     // properties
     this.dbName = dbName
@@ -47,6 +53,7 @@ export default class Localbase {
     this.orderByDirection = null
     this.limitBy = null
     this.docSelectionCriteria = null
+    this.noChange = false;
 
     this.containsProperty = null
     this.containsValue = null
@@ -60,9 +67,10 @@ export default class Localbase {
       running: false
     }
 
+
     // config
     this.config = {
-      debug: true
+      debug: false
     }
 
     // user errors - e.g. wrong type or no value passed to a method
@@ -96,104 +104,79 @@ export default class Localbase {
 
     //util - uid
     this.uid = uid.bind(this);
-    this.promesaConexion = new Promise((resolve, reject) => {
-      this.resolverPromesa = resolve; // Función para resolver la promesa
-    });
-
-    if (!!config) {
-      if (!config.url) {
-        this.resolverPromesa()
-      } else {
-        try {
-          const con = new Connection(config.url);
-          this.socket = con.socket;
-          const onOpen = () => {
-            console.log('conectado');
-            this.socket.isOpened = true;
-          }
-          this.socket.addEventListener('open', onOpen);
-          this.socket.onerror = (error) => {
-            console.log('error', error.message);
-            this.socket.removeEventListener('open', onOpen)
-            this.resolverPromesa()
-          }
-        } catch (error) {
-
-        }
-      }
-    } else try { this.resolverPromesa() } catch (e) { }
-  }
-
-  async conected() {
-    return this.promesaConexion
   }
 
   change(collection, action, data, key) {
 
-    if (!!this.socket && this.socket.isOpened) this.socket.send(`${this.dbName}:${collection}:${action}:${key}:=>${JSON.stringify(data)}`, true);
+    //console.log('change localbase', collection, action, data, key);
 
     if (!!key) {
-      Localbase.events.emit(`doc:${key}`, { action, data })
+      CloudLocalbase.events.emit(`doc:${key}`, { action, data })
     }
 
-    Localbase.events.emit(`db:${this.dbName}:col:${collection}`, { key, action, data })
-  }
+    CloudLocalbase.events.emit(`db:${this.dbName}:col:${collection}`, { key, action, data });
 
-  /**
-   * Returns a function that increments a given number by a specified amount.
-   * @param {number} cuanto - The amount to increment the number by.
-   * @returns {function} A function that takes a number and returns the incremented value.
-   */
-  static increment(cuanto) {
-    if (typeof cuanto !== 'number') return (valor) => valor;
-    return (valor) => {
-      if (typeof valor !== 'number') return valor;
-      return valor + cuanto;
-    }
-  }
-
-  /**
-   * Returns a function that takes an array and returns a new array with the given data appended to it if it doesn't already exist in the array.
-   * @param {*} data - The data to append to the array.
-   * @returns {function} A function that takes an array and returns a new array with the given data appended to it if it doesn't already exist in the array.
-   */
-  static arrayUnion(data) {
-    return (array) => {
-      if (!Array.isArray(array)) return array;
-
-      const index = array.findIndex((element) => Bun.deepEquals(element, data, true));
-
-      if (index === -1) {
-        array.push(data);
+    CloudLocalbase.transacciones.setItem(CloudLocalbase.uid(), JSON.stringify({ db:this.dbName, collection, key, action, data })).finally(() => {
+      if(!this.noChange) {
+        CloudLocalbase.events.emit('change', { db:this.dbName, collection, key, action, data });
       }
-
-      return array;
-    }
+    });
   }
 
-  /**
-   * Returns a function that removes the first occurrence of the given data object from an array.
-   * @param {Object} data - The data object to remove from the array.
-   * @returns {Function} A function that takes an array and returns a new array with the first occurrence of the given data object removed.
-   */
-  static arrayRemove(data) {
-    return (array) => {
-      if (!Array.isArray(array)) {
-        return array;
-      }
-      const index = array.findIndex((element) => Bun.deepEquals(element, data, true));
-
-      if (index !== -1) {
-        array.splice(index, 1);
-      }
-
-      return array;
-    }
-  }
+  static increment = increment
+  static arrayUnion = arrayUnion
+  static arrayRemove = arrayRemove
 
   static toTimestamp() {
     return Date.now();
   }
+
+  static async update(data){
+    //console.log(data);
+    if(!data.db) throw new Error('db no definido');
+    if(!data.collection) throw new Error('collection no definido');
+    if(!data.action) throw new Error('action no definido');
+
+    const { db, collection, key, action, data:payload } = data;
+    const localDb = new CloudLocalbase(db);
+    localDb.noChange = true;
+      if(action === ACTIONS.ADD){
+        await localDb.collection(collection).add(payload);
+        console.log('add');
+      }else if(action === ACTIONS.DELETE){
+        if(!key){
+          await localDb.collection(collection).delete();
+          console.log('delete');
+        }else {
+          await localDb.collection(collection).doc(key).delete();
+          console.log('delete doc');
+        }
+      }else if(action === ACTIONS.UPDATE){
+        try {
+          if(!payload.newDocument) throw new Error('newDocument no definido');
+          await localDb.collection(collection).doc(key).update(payload.newDocument);
+          console.log('update');
+        } catch (error) {
+          await localDb.collection(collection).add(payload.newDocument, key);
+          console.log('add to update');
+        }
+      }else if(action === ACTIONS.SET){
+       await localDb.collection(collection).doc(key).set(payload);
+       console.log('set');
+      }else if(action === ACTIONS.DROP){
+
+        if(collection){
+
+          await localDb.collection(collection).delete();
+          console.log('drop collection');
+        }else if(db){
+          await localDb.delete();
+          console.log('drop db');
+        }
+      }  
+  }
+
+  static uid = uid
 
   static toDateString(timestamp) {
     return new Date(timestamp).toLocaleDateString();

@@ -4,6 +4,7 @@ import success from '../../api-utils/success.js'
 import error from '../../api-utils/error.js'
 import showUserErrors from '../../api-utils/showUserErrors.js'
 import selectionLevel from '../../api-utils/selectionLevel.js'
+import { ACTIONS } from '../../api-utils/Constant.js'
 
 export default function set(newDocument, options = { keys: false }) {
 
@@ -94,8 +95,11 @@ export default function set(newDocument, options = { keys: false }) {
           }
         }).then(() => {
           docsToSet.forEach((docToSet, index) => {
+
             this.lf[collectionName].setItem(docToSet.key, docToSet.newDocument).then(value => {
   
+              this.change( collectionName, ACTIONS.SET, docToSet.newDocument, docToSet.key );
+
               if (index === (docsToSet.length - 1)) {
                 resolve(
                   success.call(
@@ -120,6 +124,9 @@ export default function set(newDocument, options = { keys: false }) {
       // set document by key
       this.setDocumentByKey = () => {
         this.lf[collectionName].setItem(docSelectionCriteria, newDocument).then(value => {
+
+          this.change( collectionName, ACTIONS.SET, newDocument, docSelectionCriteria );
+
           resolve(
             success.call(
               this,

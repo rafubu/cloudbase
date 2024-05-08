@@ -4,7 +4,7 @@ import selectionLevel from '../../api-utils/selectionLevel.js'
 import success from '../../api-utils/success.js'
 import error from '../../api-utils/error.js'
 import showUserErrors from '../../api-utils/showUserErrors.js'
-import Localbase from '../../localbase.js'
+import { ACTIONS } from '../../api-utils/Constant.js'
 
 export default function deleteIt() {
 
@@ -14,8 +14,10 @@ export default function deleteIt() {
     this.deleteDatabase = () => {
       let dbName = this.dbName
 
-      indexedDB.deleteDatabase(dbName)
-      this.change(null,"DROP",null,null)
+      indexedDB.deleteDatabase(dbName);
+
+      this.change( null, ACTIONS.DROP , null, null);
+
       resolve(
         success.call(
           this,
@@ -53,7 +55,7 @@ export default function deleteIt() {
             name        : dbName,
             storeName   : collectionToDelete
           }).then(() => {
-            this.change(collectionToDelete,'DROP',null,null)
+            this.change( collectionToDelete, ACTIONS.DROP , null, null)
             this.deleteNextCollectionFromQueue()
             resolve(
               success.call(
@@ -108,7 +110,7 @@ export default function deleteIt() {
           keysForDeletion.forEach((key, index) => {
             this.lf[collectionName].removeItem(key).then(() => {
               if (index === (keysForDeletion.length - 1)) {
-                this.change(collectionName,'DELETE',null, key)
+                this.change( collectionName, ACTIONS.DELETE ,null, key)
                 resolve(
                   success.call(
                     this,
@@ -134,7 +136,7 @@ export default function deleteIt() {
         this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
           if (value) {
             this.lf[collectionName].removeItem(docSelectionCriteria).then(() => {
-              this.change(collectionName,"DELETE", value, docSelectionCriteria)
+              this.change( collectionName, ACTIONS.DELETE, value, docSelectionCriteria )
               resolve(
                 success.call(
                   this,
