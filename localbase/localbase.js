@@ -26,8 +26,11 @@ import off from './api/observer/off.js'
 
 import mitt from 'mitt'
 import { ACTIONS } from "./api-utils/Constant.js";
+import updateCache from "./api-utils/updateCache.js";
 
 export default class CloudLocalbase {
+  static nodeId = null
+  static isCloud = false
 
   static iDB = localForage.createInstance({
     driver: localForage.INDEXEDDB,
@@ -41,11 +44,18 @@ export default class CloudLocalbase {
     storeName: 'transacciones'
   });
 
-  static events = mitt()
+  static events = mitt();
+
+  static cache = {}
+  static times = {}
+
   constructor(dbName) {
+
+    if (CloudLocalbase.isCloud && !CloudLocalbase.nodeId) throw new Error('nodeId no definido');
 
     // properties
     this.dbName = dbName
+    this.nodeId = CloudLocalbase.nodeId
 
     this.lf = {} // where we store our localForage instances
     this.collectionName = null
@@ -70,7 +80,7 @@ export default class CloudLocalbase {
 
     // config
     this.config = {
-      debug: false
+      debug: true
     }
 
     // user errors - e.g. wrong type or no value passed to a method
@@ -97,30 +107,28 @@ export default class CloudLocalbase {
     this.on = on.bind(this)
     this.off = off.bind(this)
 
-    this.cache = {}
-    this.time = 0
-
     this.search = search.bind(this);
 
     //util - uid
     this.uid = uid.bind(this);
   }
 
-  change(collection, action, data, key) {
+  change( collection, action, data, key ) {
 
     //console.log('change localbase', collection, action, data, key);
 
     if (!!key) {
-      CloudLocalbase.events.emit(`doc:${key}`, { action, data })
+      CloudLocalbase.events.emit(`doc:${key}`, { action, data });
+      updateCache(this.dbName, collection, key, action, data);
     }
 
     CloudLocalbase.events.emit(`db:${this.dbName}:col:${collection}`, { key, action, data });
 
-    CloudLocalbase.transacciones.setItem(CloudLocalbase.uid(), JSON.stringify({ db:this.dbName, collection, key, action, data })).finally(() => {
-      if(!this.noChange) {
-        CloudLocalbase.events.emit('change', { db:this.dbName, collection, key, action, data });
-      }
-    });
+    if (!this.noChange) {
+      CloudLocalbase.transacciones.setItem(CloudLocalbase.uid(), JSON.stringify({ db: this.dbName, collection, key, action, data, ts: Date.now() })).finally(() => {
+        CloudLocalbase.events.emit('change', { db: this.dbName, collection, key, action, data });
+      });
+    }
   }
 
   static increment = increment
@@ -131,49 +139,85 @@ export default class CloudLocalbase {
     return Date.now();
   }
 
-  static async update(data){
+  static async update(data) {
     //console.log(data);
-    if(!data.db) throw new Error('db no definido');
-    if(!data.collection) throw new Error('collection no definido');
-    if(!data.action) throw new Error('action no definido');
+    if (!data.db) throw new Error('db no definido');
+    if (!data.collection) throw new Error('collection no definido');
+    if (!data.action) throw new Error('action no definido');
 
-    const { db, collection, key, action, data:payload } = data;
+    const { db, collection, key, action, data: payload } = data;
+
     const localDb = new CloudLocalbase(db);
     localDb.noChange = true;
-      if(action === ACTIONS.ADD){
-        await localDb.collection(collection).add(payload);
-        console.log('add');
-      }else if(action === ACTIONS.DELETE){
-        if(!key){
-          await localDb.collection(collection).delete();
-          console.log('delete');
-        }else {
-          await localDb.collection(collection).doc(key).delete();
-          console.log('delete doc');
-        }
-      }else if(action === ACTIONS.UPDATE){
-        try {
-          if(!payload.newDocument) throw new Error('newDocument no definido');
-          await localDb.collection(collection).doc(key).update(payload.newDocument);
-          console.log('update');
-        } catch (error) {
-          await localDb.collection(collection).add(payload.newDocument, key);
-          console.log('add to update');
-        }
-      }else if(action === ACTIONS.SET){
-       await localDb.collection(collection).doc(key).set(payload);
-       console.log('set');
-      }else if(action === ACTIONS.DROP){
 
-        if(collection){
+    if (action === ACTIONS.ADD) {
+      if (!key) throw new Error('key no definido');
+      await localDb.collection(collection).add(payload, key);
+      console.log('add');
+    } else if (action === ACTIONS.DELETE) {
+      if (!key) {
+        await localDb.collection(collection).delete();
+        console.log('delete colección');
+      } else {
+        await localDb.collection(collection).doc(key).delete();
+        console.log('delete doc');
+      }
+    } else if (action === ACTIONS.UPDATE) {
+      try {
+        if (!payload.newDocument) throw new Error('newDocument no definido');
+        const doc = await localDb.collection(collection).doc(key).get();
+        if (!doc) throw new Error('doc no encontrado');
 
-          await localDb.collection(collection).delete();
-          console.log('drop collection');
-        }else if(db){
-          await localDb.delete();
-          console.log('drop db');
-        }
-      }  
+        const dbResult = [doc, payload.newDocument];
+
+        // Resolver conflictos y obtener el objeto más reciente
+        const resolvedObject = dbResult.reduce((prev, current) => {
+          return compareObjects(prev, current) > 0 ? prev : current;
+        });
+
+        await localDb.collection(collection).doc(key).update(resolvedObject);
+        console.log('update');
+      } catch (error) {
+        await localDb.collection(collection).add(payload.newDocument, key);
+        console.log('add to update');
+      }
+    } else if (action === ACTIONS.SET) {
+      await localDb.collection(collection).doc(key).set(payload);
+      console.log('set');
+    } else if (action === ACTIONS.DROP) {
+
+      if (collection) {
+
+        await localDb.collection(collection).delete();
+        console.log('drop collection');
+      } else if (db) {
+        await localDb.delete();
+        console.log('drop db');
+      }
+    }
+  }
+
+  static async read( data ){
+    if (!data.db) throw new Error('db no definido');
+    if (!data.collection) throw new Error('collection no definido');
+    if (!data.action) throw new Error('action no definido');
+
+    const { db, collection, key, action, data: payload } = data;
+
+    const localDb = new CloudLocalbase(db);
+    localDb.noChange = true;
+
+    if (action === ACTIONS.GET) {
+      if (!key) return await localDb.collection(collection).doc(payload).get();
+      return await localDb.collection(collection).doc(key).get();
+    } else if (action === ACTIONS.GET_ALL) {
+      return await localDb.collection(collection).get();
+    }else if(action === ACTIONS.GET_WHERE){
+      return await localDb.collection(collection).where(payload).get();
+    }else if(action === ACTIONS.SEARCH){
+      return await localDb.collection(collection).search(payload);
+    }
+
   }
 
   static uid = uid

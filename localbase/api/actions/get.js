@@ -5,8 +5,10 @@ import selectionLevel from '../../api-utils/selectionLevel.js'
 import showUserErrors from '../../api-utils/showUserErrors.js'
 import cumpleCriterios from '../../api-utils/cumpleCriterio.js'
 import { single } from 'fuzzysort'
+import { readFromCacheOrDisk } from '../../api-utils/readFromCaheOrDisk.js'
 
 export default function get(options = { keys: false }) {
+
   // get collection
   this.getCollection = () => {
     let collectionName = this.collectionName
@@ -21,23 +23,25 @@ export default function get(options = { keys: false }) {
     const cuantosWhere = whereArguments.length
     if(cuantosWhere > 10 ) throw new Error('No se pueden usar mas de 10 where en una consulta')
 
-    let collection = []
     let logMessage
+    let collection = [];
    
-    return this.lf[collectionName].iterate((value, key) => {
+    return readFromCacheOrDisk({db:this.dbName, collectionName, lf:this.lf},(value, key) => {
+  
+      const data = value.data || value;
       let collectionItem = {}
       if (!options.keys) {
-        collectionItem = value
+        collectionItem = data
       }
       else {
         collectionItem = {
           key: key,
-          data: value
+          data:data
         }
       }
       logMessage = `Got "${ collectionName }" collection`
       if(containsProperty){
-        let valor = value[containsProperty]
+        let valor = data[containsProperty]
         try {
           if(typeof valor !== undefined){
             if( typeof valor === 'boolean' && typeof containsValue === 'boolean'){
@@ -75,8 +79,8 @@ export default function get(options = { keys: false }) {
         } catch (error) {
           this.userErrors.push(`Constain():${error.message}`)
         }
-      }else if(typeof value === 'object' && cuantosWhere){
-        cumpleCriterios.call(this,value) && collection.push(collectionItem)
+      }else if(typeof data === 'object' && cuantosWhere){
+        cumpleCriterios.call(this,data) && collection.push(collectionItem)
         if(limitBy){
           if(collection.length > (limitBy + 10 )) {
             logMessage += `, limited to contains is ${ limitBy } `
@@ -129,9 +133,11 @@ export default function get(options = { keys: false }) {
 
     // get document by criteria
     this.getDocumentByCriteria = () => {
-      return this.lf[collectionName].iterate((value, key) => {
-        if (isSubset(value, docSelectionCriteria)) {
-          collection.push(value)
+
+      return readFromCacheOrDisk({ db:this.dbName, collectionName, lf:this.lf },(value, key) => {
+        const data = value.data || value;
+        if (isSubset(data, docSelectionCriteria)) {
+          collection.push(data)
         }
       }).then(() => {
         if (!collection.length) {
@@ -149,7 +155,7 @@ export default function get(options = { keys: false }) {
     // get document by key
     this.getDocumentByKey = () => {
       return this.lf[collectionName].getItem(docSelectionCriteria).then((value) => {
-        document = value
+        document = value.data || value
         if (document) {
           logger.log.call(this, `Got Document with key ${ JSON.stringify(docSelectionCriteria) }:`, document)
         }

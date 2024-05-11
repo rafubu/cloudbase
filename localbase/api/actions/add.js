@@ -28,6 +28,8 @@ export default function add(data, keyProvided) {
     return new Promise((resolve, reject) => {
       let key = null
 
+      const datos = { }
+
       // if no key provided, generate random, ordered key
       if (!keyProvided) {
         key = this.uid()
@@ -38,7 +40,10 @@ export default function add(data, keyProvided) {
 
       try {
         if (data._prepared_ === undefined) {
-          data._prepared_ = prepare(searchStringInObject(data));
+          datos._prepared_ = prepare(searchStringInObject(data));
+        }else {
+          datos._prepared_ = data._prepared_;
+          delete data._prepared_
         }
 
       } catch (error) {
@@ -46,9 +51,43 @@ export default function add(data, keyProvided) {
         logger.error.call(this, error.message);
       }
 
-      return this.lf[collectionName].setItem(key, data).then(async () => {
+      const ts = Date.now()
 
-        this.change(collectionName, ACTIONS.ADD, data, key);
+      datos.createdAt = data.createdAt || ts;
+      datos.updatedAt = data.updatedAt || ts;
+      datos._id = data._id || key;
+      datos._nodeId = data._nodeId || this.nodeId;
+
+      delete data._nodeId;
+      delete data._id;
+      delete data.createdAt;
+      delete data.updatedAt;
+
+      if(this.nodeId){
+
+        if(data.clock){
+          datos.clock = data.clock
+          delete data.clock
+        }
+
+        if(!datos.clock) datos.clock = {[this.nodeId]:0}
+
+        if(!datos.clock[this.nodeId]){
+          datos.clock[this.nodeId] = 0
+        }
+
+      }
+
+      if(data.data){
+        datos.data = data.data;
+        delete data.data;
+      }else {
+        datos.data = data;
+      }
+
+      return this.lf[collectionName].setItem(key, datos ).then(async () => {
+
+        this.change(collectionName, ACTIONS.ADD, datos, key);
 
         resolve(
           success.call(

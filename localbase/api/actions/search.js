@@ -2,8 +2,10 @@ import logger from "../../utils/logger.js"
 import reset from '../../api-utils/reset.js'
 import selectionLevel from '../../api-utils/selectionLevel.js'
 import showUserErrors from '../../api-utils/showUserErrors.js'
-import { go, prepare } from 'fuzzysort';
-import searchStringInObject from '../../api-utils/StringInObject.js'
+import { go } from 'fuzzysort';
+import CloudLocalbase from "../../localbase.js";
+import inChache, { kche } from "../../api-utils/inChache.js";
+import { loadKcheFromDisk } from "../../api-utils/readFromCaheOrDisk.js";
 
 /**
  * 
@@ -20,44 +22,38 @@ export default async function search(query = '',inKeys =[], options = { highligh
 
   this.buscar = async () => {
     console.time('buscar')
+    let dbName = this.dbName;
     let collectionName = this.collectionName;
-    if(!!this.cache[collectionName] && this.time){
-      clearTimeout(this.time)
+
+    if(!CloudLocalbase.times[dbName]) CloudLocalbase.times[dbName] = {}
+    if(!CloudLocalbase.times[dbName][collectionName]) CloudLocalbase.times[dbName][collectionName] = 0;
+
+    if(inChache(dbName, collectionName)){
+      clearTimeout(CloudLocalbase.times[dbName][collectionName])
     } else {
-      this.cache[collectionName] = []
+      if(!CloudLocalbase.times[dbName]) CloudLocalbase.times[dbName] = {}
       console.time('cargando_cache')
-      await new Promise((res, rej) => {
-        this.lf[collectionName].iterate((value, key) => {
-            if(!(value.___prepared___)){
-              value.___prepared___ = prepare(searchStringInObject(value))
-            }
-            this.cache[collectionName].push(value);
-        }).then(() => {
-          res(true)
-        }).catch(e => {
-          rej(e)
-        });
-      })
+      await loadKcheFromDisk(dbName, collectionName, this.lf)
       console.timeEnd('cargando_cache')
     }
-    
-    this.time = setTimeout(()=>{
-      delete this.cache[collectionName]
-      this.time = 0;
-    },1000 * 60 * 60 )
+
+    CloudLocalbase.times[dbName][collectionName] = setTimeout(()=>{
+      delete CloudLocalbase.cache[dbName][collectionName]
+      delete CloudLocalbase.times[dbName][collectionName];
+    }, 1000 * 60 * 60 )
     
     const optionsFuzzy = {
-      limit: 50, // don't return more results than you need!
+      limit: 20, // don't return more results than you need!
       threshold: -10000, // don't return bad results
-      key: Array.isArray(inKeys) && inKeys.length ? null : '___prepared___',
+      key: Array.isArray(inKeys) && inKeys.length ? null : '_prepared_',
       keys: Array.isArray(inKeys) && inKeys.length ? inKeys : null
     }
 
-    const results = go(query, this.cache[collectionName], optionsFuzzy);
+    const results = go(query, kche( dbName, collectionName ), optionsFuzzy);
     logger.log.call(this, 'SEARCHS', results.length);
     console.timeEnd('buscar')
     reset.call(this);
-    return results.map(o => o.obj);
+    return results.map(o => o.obj && o.obj.data ? o.obj.data : o.obj);
   }
 
   // check for user errors

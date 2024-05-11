@@ -73,7 +73,7 @@ export default function update(docUpdates) {
 
     // update document by key
     this.updateDocumentByKey = () => {
-      let docToUpdate = { key: docSelectionCriteria }
+      let docToUpdate = { key: docSelectionCriteria, }
       this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
         docToUpdate.oldDocument = value ;
         const dataAUpdated = isValidFuntionAnExecute.call( this, docUpdates, docToUpdate.oldDocument);
