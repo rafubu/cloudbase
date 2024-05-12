@@ -11,11 +11,10 @@
 
 <body>
   <script type="module">
+
     import * as Rebase from './out/index.js';
 
     const { Localbase, Cloud } = Rebase;
-
-
 
     const cloud = new Cloud({ key: 'rafita', host: 'peer.app-re.online' }, Localbase);
     await cloud.init();
@@ -31,17 +30,45 @@
     if (cloud.myId() !== '131d70d0-1ad7-4c28-90e3-7d0a24a06d0f') {
       await cloud.addNode('slave', '131d70d0-1ad7-4c28-90e3-7d0a24a06d0f');
       await Cloud.conectar();
-      console.log('master')
+      console.log('master');
+
+      /* for (let index = 10; index < 20; index++) {
+        await db.collection('test').add({ nombre: 'CHUP' + index, apellido: 'rozas' })
+      } */
+
+      function numeroAlAzar(min, max) {
+        // Genera un número aleatorio entre 0 (inclusive) y 1 (exclusivo)
+        var numeroAleatorio = Math.random();
+
+        // Escala el número aleatorio para que esté dentro del rango deseado
+        var numeroEnRango = numeroAleatorio * (max - min) + min;
+
+        // Redondea el número al entero más cercano (si lo deseas)
+        numeroEnRango = Math.round(numeroEnRango);
+
+        return numeroEnRango;
+      }
+
       const datas = await db.collection('test').get();
-      console.log('DATAS', datas);
+      console.log('DATAS', );
+
+      let contador = 0;
+      setInterval(async () => {
+        contador++;
+        const numAzar = numeroAlAzar(0,datas.length)
+        console.log({numAzar})
+        const das = datas[numAzar]
+        console.log({das})
+        await db.collection('test').doc(das.id).update({nombre:das.nombre+contador});
+      }, 10000)
 
       setTimeout(async () => {
-        const datas = await db.collection('test').get({ keys: true });
-        console.log('DATAS', datas);
+        //const datas = await db.collection('test').get({ keys: true });
+        //console.log('DATAS', datas);
         try {
-        //const asyncResults = await cloud.read({ db: 'tested', collection: 'test', action: 'get', data: 'chup',key:'11ef0ee710921ca09adecd16443d2dc3' });
-        const asyncResults = await cloud.read({ db: 'tested', collection: 'test', action: 'getWhere', data: {nombre: 'CHUP'} });
-        console.log('ASYNC RESULTS', asyncResults)
+          //const asyncResults = await cloud.read({ db: 'tested', collection: 'test', action: 'get', data: 'chup',key:'11ef0ee710921ca09adecd16443d2dc3' });
+          //const asyncResults = await cloud.read({ db: 'tested', collection: 'test', action: 'getWhere', data: {nombre: 'CHU'} });
+          //console.log('ASYNC RESULTS', asyncResults)
         } catch (error) {
           console.error('Error:', error);
         }
@@ -54,6 +81,15 @@
       /* setTimeout(() => {
         search('chp')
       }, 10000); */
+    } else {
+      console.log('slave');
+      await cloud.addNode('master', '495f65bd-6f92-4af1-9462-3746aa874235');
+      await Cloud.conectar();
+      let contador = 0;
+      /* setInterval(async () => {
+        contador++;
+        await db.collection('test').add({ nombre: 'CHUP'+contador, apellido: 'rozas'+ contador});
+      }, 5000) */
     }
 
 

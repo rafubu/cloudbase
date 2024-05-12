@@ -1,4 +1,7 @@
 import { Peer } from 'peerjs';
+import received from './received';
+import openPeer from './openPeer';
+import Log from './logger'
 
 export default class Cloud {
   #resolverPromesa = null;
@@ -18,14 +21,13 @@ export default class Cloud {
     if (!this.config) throw new Error('Configuracion no definida');
     if (!this.config.key) throw new Error('ApiKey no definido');
     if (!this.config.host) throw new Error('host no definido');
-    if (!this.config.debug) this.config.debug = 1;
+    if (!this.config.debug) this.config.debug = 0;
 
     this.promesaConexion = new Promise((resolve, reject) => {
       this.#resolverPromesa = resolve; // Función para resolver la promesa
     });
 
     const changes = (data) => {
-      console.log('notificando cambios')
       this.connecciones.forEach(conn => {
         if (conn.open) conn.send({ event: 'change', data });
       });
@@ -65,69 +67,40 @@ export default class Cloud {
         this.#resolverPromesa();
       });
       this.peer.on('connection', (conn) => {
-        console.log('connection', conn.peer);
+        Log.log('connection', conn.peer);
         this.connecciones = this.connecciones.filter(conn => conn.peer !== conn.peer);
         this.connecciones.push(conn);
 
-        conn.on('data', async (data) => {
-          console.log('data received', data);
-          if (data.event === 'change') {
-            await this.Localbase.update(data.data, this.peer.id);
-          }
-
-          if (data.event === 'recovery_pull') {
-            // ultimas transacciones
-            this.Localbase.transacciones.iterate((value, key) => {
-              if (key >= data.data) {
-                conn.send({ event: 'recovery_data', data: value })
-              }
-            }).then(() => {
-              conn.send({ event: 'recovery_end', data: Date.now() })
-            });
-
-          }
-
-          if (data.event === 'recovery_data') {
-            await this.Localbase.update(JSON.parse(data.data), this.peer.id);
-          }
-
-          if (data.event === 'read') {
-            const results = await this.Localbase.read(data.data);
-            conn.send({ event: 'read_result', data: results });
-          }
-
-          if (data.event === 'recovery_end') {
-            console.log('recovery_end', data)
-          }
-        });
+        conn.on('data', received);
 
         conn.on('close', () => {
-          console.log('close', conn.peer);
+          Log.log('close', conn.peer);
           this.connecciones = this.connecciones.filter(conn => conn.peer !== conn.peer);
         });
       });
 
       this.peer.on('error', (error) => {
 
-        console.log('[CLOUD ] name: ', error.name, ', message: ', error.message, ', type: ', error.type);
+        Log.error('[CLOUD ] name: '+error.name+', message: '+ error.message+', type: '+ error.type);
 
         if (error.type === 'network') {
           this.Localbase.iDB.setItem('last_coneccion', this.Localbase.uid());
-
+          Log.warn('network');
+          this.#resolverPromesa();
         }
 
         if (error.type === 'unavailable-id') {
-          console.warn('unavailable-id');
+          Log.warn('unavailable-id');
           this.Localbase.iDB.setItem('last_coneccion', this.Localbase.uid());
+          this.#resolverPromesa();
         }
 
         if (error.type === 'peer-unavailable') {
-          console.warn('peer-unavailable');
+          Log.warn('peer-unavailable');
           this.connecciones = this.connecciones.filter(conn => conn.open);
           this.Localbase.iDB.setItem('peers', JSON.stringify(this.connecciones.map(conn => ({ nodeId: conn.peer, label: conn.label }))));
           return
         }
-        this.Localbase.events.off('change', changes);
       });
 
     });
@@ -188,41 +161,26 @@ export default class Cloud {
 
 
   static async conectar() {
-    console.log('conectando')
     const peers = await Cloud.intance.getPeers();
 
     const peersNoConectados = peers.filter(peer => !Cloud.intance.connecciones.find(conn => conn.peer === peer.nodeId));
 
-    const last_coneccion = await Cloud.intance.Localbase.iDB.getItem('last_coneccion');
-
     for (const { nodeId, label } of peersNoConectados) {
-      const cone = Cloud.intance.peer.connect(nodeId, { label, reliable: true });
-      cone.on('error', (error) => {
-        console.error('error cone', error);
-      });
-      cone.on('close', () => {
-        console.log('cone', cone.peer, cone.open);
-        Cloud.intance.connecciones = Cloud.intance.connecciones.filter(conn => conn.peer !== cone.peer);
-      });
-      cone.on('open', () => {
-        console.log('coneccion abierta =>', cone.peer);
-        Cloud.intance.connecciones = Cloud.intance.connecciones.filter(conn => conn.peer !== cone.peer);
-        Cloud.intance.connecciones.push(cone);
-        if (last_coneccion) {
-          cone.send({ event: 'recovery_pull', data: last_coneccion });
-
-          Cloud.intance.Localbase.transacciones.iterate((value, key) => {
-            if (key >= last_coneccion) {
-              console.log('isMayor', key)
-              cone.send({ event: 'recovery_data', data: value })
-            }
-          }).then(() => {
-            cone.send({ event: 'recovery_end', data: Date.now() })
-          });
-        }
-      });
+      try {
+        const cone = Cloud.intance.peer.connect(nodeId, { label, reliable: true });
+        cone.on('error', (error) => {
+          Log.error('error cone', error);
+        });
+        cone.on('close', () => {
+          Log.log('cone', cone.peer, cone.open);
+          Cloud.intance.connecciones = Cloud.intance.connecciones.filter(conn => conn.peer !== cone.peer);
+        });
+        cone.on('open', openPeer);
+  
+        cone.on('data', received);
+      } catch (error) {
+        Log.warn('coneccion error')
+      }
     }
-
-    // await Cloud.intance.Localbase.iDB.removeItem('last_coneccion');
   }
 }

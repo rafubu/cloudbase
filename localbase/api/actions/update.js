@@ -7,11 +7,15 @@ import showUserErrors from '../../api-utils/showUserErrors.js'
 import isValidFuntionAnExecute from '../../api-utils/isValidFunctionAndExecute.js'
 import cumpleCriterios from '../../api-utils/cumpleCriterio.js'
 import { ACTIONS } from '../../api-utils/Constant.js'
+import { compareObjects } from '../../api-utils/compareObject.js'
+import { prepare } from 'fuzzysort'
+import searchStringInObject from '../../api-utils/StringInObject.js'
 
 export default function update(docUpdates) {
   let collectionName = this.collectionName
   let docSelectionCriteria = this.docSelectionCriteria
   let whereArguments = this.whereArguments
+  let nodeId = this.nodeId
   const cuantosWhere = whereArguments.length
   if (cuantosWhere > 10) throw new Error('No se pueden usar mas de 10 where en una consulta')
 
@@ -75,10 +79,68 @@ export default function update(docUpdates) {
     this.updateDocumentByKey = () => {
       let docToUpdate = { key: docSelectionCriteria, }
       this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
-        docToUpdate.oldDocument = value ;
-        const dataAUpdated = isValidFuntionAnExecute.call( this, docUpdates, docToUpdate.oldDocument);
+        docToUpdate.oldDocument = value;
+        const dataAUpdated = isValidFuntionAnExecute.call( this, docUpdates, docToUpdate.oldDocument.data);
         
-        docToUpdate.newDocument = updateObject(JSON.parse(JSON.stringify(docToUpdate.oldDocument)), dataAUpdated);
+        docToUpdate.newDocument = { ...value, data: updateObject(JSON.parse(JSON.stringify( docToUpdate.oldDocument.data )), dataAUpdated)}
+
+        docToUpdate.newDocument.updatedAt = Date.now();
+
+        if(docToUpdate.newDocument.clock){
+          if(docToUpdate.newDocument.clock[nodeId]){
+            docToUpdate.newDocument.clock[nodeId]++;
+          }else {
+            docToUpdate.newDocument.clock[nodeId] = 1;
+          }
+        }
+
+        if(docToUpdate.newDocument._prepared_){
+          docToUpdate.newDocument._prepared_ = prepare(searchStringInObject(docToUpdate.newDocument.data));
+        }
+
+        this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument)
+
+        this.change(collectionName, ACTIONS.UPDATE, docToUpdate, docToUpdate.key)
+
+        resolve(
+          success.call(
+            this,
+            `Document in "${collectionName}" collection with key ${JSON.stringify(docSelectionCriteria)} updated.`,
+            docToUpdate.newDocument
+          )
+        )
+      }).catch(err => {
+        reject(
+          error.call(
+            this,
+            `No Document found in "${collectionName}" collection with key ${JSON.stringify(docSelectionCriteria)}`
+          )
+        )
+      })
+    }
+
+    // update document by key
+    this.updateDocumentByKeyCloud = () => {
+      let docToUpdate = { key: docSelectionCriteria, }
+      this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
+        
+        if(docUpdates.clock){
+          if(docUpdates.clock[nodeId]){
+            docUpdates.clock[nodeId]++;
+          }else {
+            docUpdates.clock[nodeId] = 1;
+          }
+        }
+
+      const dbResult = [ value, docUpdates ];
+
+      // Resolver conflictos y obtener el objeto más reciente
+      const resolvedObject = dbResult.reduce((prev, current) => {
+        return compareObjects(prev, current) > 0 ? prev : current;
+      });
+
+        docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));        
+        docToUpdate.newDocument = JSON.parse(JSON.stringify(resolvedObject));
 
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument)
 
@@ -118,7 +180,11 @@ export default function update(docUpdates) {
         }
       }
       else {
-        this.updateDocumentByKey()
+        if(this.noChange){
+          this.updateDocumentByKeyCloud()
+        }else {
+          this.updateDocumentByKey()
+        }
       }
     }
     else {

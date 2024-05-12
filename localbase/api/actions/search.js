@@ -8,7 +8,6 @@ import inChache, { kche } from "../../api-utils/inChache.js";
 import { loadKcheFromDisk } from "../../api-utils/readFromCaheOrDisk.js";
 
 /**
- * 
  * @param {string} query  text to search within the collection
  * @param {Array} inKeys properties of the object where to search eg: ['title','category']
  * @param {object} options { highlights:true }

@@ -11,26 +11,26 @@ let logger = {
     warn: '#f39c12'
   },
   log(message, secondary) {
-    if (process.env.NODE_ENV == 'development' && this.config.debug) {
+    if (process.env.NODE_ENV == 'development') {
       let style = logger.baseStyle + `background-color: ${ logger.colors.log }`
       if (secondary) {
-        console.log('%cLocalbase', style, message, secondary)
+        console.log('%c CloudBase ', style, message, secondary)
       }
       else {
-        console.log('%cLocalbase', style, message)
+        console.log('%c CloudBase ', style, message)
       }
     }
   },
   error(message, secondary) {
-    if (process.env.NODE_ENV == 'development' && this.config.debug) {
+    if (process.env.NODE_ENV == 'development') {
       let style = logger.baseStyle + `background-color: ${ logger.colors.error }`
-      console.error('%cLocalbase', style, message)
+      console.error('%c CloudBase ', style, message)
     }
   },  
   warn(message, secondary) {
-    if (process.env.NODE_ENV == 'development' && this.config.debug) {
+    if (process.env.NODE_ENV == 'development' ) {
       let style = logger.baseStyle + `background-color: ${ logger.colors.warn }`
-      console.warn('%cLocalbase', style, message)
+      console.warn('%c CloudBase ', style, message)
     }
   }
 }

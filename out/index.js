@@ -3472,22 +3472,22 @@ var logger = {
     if (this.config.debug) {
       let style = logger.baseStyle + `background-color: ${logger.colors.log}`;
       if (secondary) {
-        console.log("%clocalbase", style, message, secondary);
+        console.log("%cLocalbase", style, message, secondary);
       } else {
-        console.log("%clocalbase", style, message);
+        console.log("%cLocalbase", style, message);
       }
     }
   },
   error(message, secondary) {
     if (this.config.debug) {
       let style = logger.baseStyle + `background-color: ${logger.colors.error}`;
-      console.error("%clocalbase", style, message);
+      console.error("%cLocalbase", style, message);
     }
   },
   warn(message, secondary) {
     if (this.config.debug) {
       let style = logger.baseStyle + `background-color: ${logger.colors.warn}`;
-      console.warn("%clocalbase", style, message);
+      console.warn("%cLocalbase", style, message);
     }
   }
 };
@@ -3800,7 +3800,7 @@ function get(options = { keys: false }) {
     };
     this.getDocumentByKey = () => {
       return this.lf[collectionName].getItem(docSelectionCriteria).then((value) => {
-        document = value.data || value;
+        document = this.noChange ? value : value.data || value;
         if (document) {
           logger_default.log.call(this, `Got Document with key ${JSON.stringify(docSelectionCriteria)}:`, document);
         } else {
@@ -3946,6 +3946,9 @@ function add(data, keyProvided) {
       } else {
         datos.data = data;
       }
+      if (!datos.data.id) {
+        datos.data.id = key;
+      }
       return this.lf[collectionName].setItem(key, datos).then(async () => {
         this.change(collectionName, ACTIONS.ADD, datos, key);
         resolve(success.call(this, `Document added to "${collectionName}" collection.`, { key, data }));
@@ -4009,11 +4012,45 @@ function validarYEjecutarFunciones(docNewData, docOldData) {
   }
 }
 
+// localbase/api-utils/compareObject.js
+function compareObjects(a, b) {
+  if (a.updatedAt < b.updatedAt) {
+    return -1;
+  } else if (a.updatedAt > b.updatedAt) {
+    return 1;
+  } else {
+    const aClock = a.clock || {};
+    const bClock = b.clock || {};
+    let aWins = false;
+    let bWins = false;
+    for (const nodeId in aClock) {
+      if (aClock[nodeId] > (bClock[nodeId] || 0)) {
+        aWins = true;
+      } else if (aClock[nodeId] < (bClock[nodeId] || 0)) {
+        bWins = true;
+      }
+    }
+    if (aWins && !bWins) {
+      return -1;
+    } else if (!aWins && bWins) {
+      return 1;
+    } else {
+      if (a._nodeId && b._nodeId) {
+        return a._nodeId.localeCompare(b._nodeId);
+      } else {
+        return 0;
+      }
+    }
+  }
+}
+
 // localbase/api/actions/update.js
+var import_fuzzysort3 = __toESM(require_fuzzysort(), 1);
 function update(docUpdates) {
   let collectionName = this.collectionName;
   let docSelectionCriteria = this.docSelectionCriteria;
   let whereArguments = this.whereArguments;
+  let nodeId = this.nodeId;
   const cuantosWhere = whereArguments.length;
   if (cuantosWhere > 10)
     throw new Error("No se pueden usar mas de 10 where en una consulta");
@@ -4056,8 +4093,42 @@ function update(docUpdates) {
       let docToUpdate = { key: docSelectionCriteria };
       this.lf[collectionName].getItem(docSelectionCriteria).then((value) => {
         docToUpdate.oldDocument = value;
-        const dataAUpdated = validarYEjecutarFunciones.call(this, docUpdates, docToUpdate.oldDocument);
-        docToUpdate.newDocument = updateObject(JSON.parse(JSON.stringify(docToUpdate.oldDocument)), dataAUpdated);
+        const dataAUpdated = validarYEjecutarFunciones.call(this, docUpdates, docToUpdate.oldDocument.data);
+        docToUpdate.newDocument = { ...value, data: updateObject(JSON.parse(JSON.stringify(docToUpdate.oldDocument.data)), dataAUpdated) };
+        docToUpdate.newDocument.updatedAt = Date.now();
+        if (docToUpdate.newDocument.clock) {
+          if (docToUpdate.newDocument.clock[nodeId]) {
+            docToUpdate.newDocument.clock[nodeId]++;
+          } else {
+            docToUpdate.newDocument.clock[nodeId] = 1;
+          }
+        }
+        if (docToUpdate.newDocument._prepared_) {
+          docToUpdate.newDocument._prepared_ = import_fuzzysort3.prepare(StringInObject_default(docToUpdate.newDocument.data));
+        }
+        this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument);
+        this.change(collectionName, ACTIONS.UPDATE, docToUpdate, docToUpdate.key);
+        resolve(success.call(this, `Document in "${collectionName}" collection with key ${JSON.stringify(docSelectionCriteria)} updated.`, docToUpdate.newDocument));
+      }).catch((err) => {
+        reject(error.call(this, `No Document found in "${collectionName}" collection with key ${JSON.stringify(docSelectionCriteria)}`));
+      });
+    };
+    this.updateDocumentByKeyCloud = () => {
+      let docToUpdate = { key: docSelectionCriteria };
+      this.lf[collectionName].getItem(docSelectionCriteria).then((value) => {
+        if (docUpdates.clock) {
+          if (docUpdates.clock[nodeId]) {
+            docUpdates.clock[nodeId]++;
+          } else {
+            docUpdates.clock[nodeId] = 1;
+          }
+        }
+        const dbResult = [value, docUpdates];
+        const resolvedObject = dbResult.reduce((prev, current) => {
+          return compareObjects(prev, current) > 0 ? prev : current;
+        });
+        docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));
+        docToUpdate.newDocument = JSON.parse(JSON.stringify(resolvedObject));
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument);
         this.change(collectionName, ACTIONS.UPDATE, docToUpdate, docToUpdate.key);
         resolve(success.call(this, `Document in "${collectionName}" collection with key ${JSON.stringify(docSelectionCriteria)} updated.`, docToUpdate.newDocument));
@@ -4078,7 +4149,11 @@ function update(docUpdates) {
           this.updateDocumentByCriteria(true);
         }
       } else {
-        this.updateDocumentByKey();
+        if (this.noChange) {
+          this.updateDocumentByKeyCloud();
+        } else {
+          this.updateDocumentByKey();
+        }
       }
     } else {
       showUserErrors.call(this);
@@ -4293,7 +4368,7 @@ function deleteIt() {
 }
 
 // localbase/api/actions/search.js
-var import_fuzzysort3 = __toESM(require_fuzzysort(), 1);
+var import_fuzzysort4 = __toESM(require_fuzzysort(), 1);
 async function search(query = "", inKeys = [], options = { highlights: true }) {
   if (!query)
     return logger_default.error.call(this, "query in search is empty");
@@ -4326,7 +4401,7 @@ async function search(query = "", inKeys = [], options = { highlights: true }) {
       key: Array.isArray(inKeys) && inKeys.length ? null : "_prepared_",
       keys: Array.isArray(inKeys) && inKeys.length ? inKeys : null
     };
-    const results = import_fuzzysort3.go(query, kche(dbName, collectionName), optionsFuzzy);
+    const results = import_fuzzysort4.go(query, kche(dbName, collectionName), optionsFuzzy);
     logger_default.log.call(this, "SEARCHS", results.length);
     console.timeEnd("buscar");
     reset.call(this);
@@ -4529,12 +4604,14 @@ function mitt_default(n) {
 
 // localbase/api-utils/updateCache.js
 function updateCache(db, collection2, key, data, action) {
-  if (inChache(db, collection2))
+  if (!inChache(db, collection2))
     return;
   const index = CloudLocalbase.cache[db][collection2].findIndex((o) => o._id === key);
   if (index !== -1) {
     if (action === ACTIONS.DELETE) {
       CloudLocalbase.cache[db][collection2].splice(index, 1);
+    } else if (action === ACTIONS.UPDATE) {
+      CloudLocalbase.cache[db][collection2][index] = data.newDocument;
     } else {
       CloudLocalbase.cache[db][collection2][index] = data;
     }
@@ -4542,6 +4619,78 @@ function updateCache(db, collection2, key, data, action) {
     if (action !== ACTIONS.DELETE) {
       CloudLocalbase.cache[db][collection2].push(data);
     }
+  }
+}
+
+// localbase/api/actions/updateRaw.js
+async function updateRaw(data) {
+  if (!data.db)
+    throw new Error("db no definido");
+  if (!data.collection)
+    throw new Error("collection no definido");
+  if (!data.action)
+    throw new Error("action no definido");
+  const { db, collection: collection2, key, action, data: payload } = data;
+  const localDb = new CloudLocalbase(db);
+  localDb.noChange = true;
+  if (action === ACTIONS.ADD) {
+    if (!key)
+      throw new Error("key no definido");
+    await localDb.collection(collection2).add(payload, key);
+    console.log("add");
+  } else if (action === ACTIONS.DELETE) {
+    if (!key) {
+      await localDb.collection(collection2).delete();
+      console.log("delete colecci\xF3n");
+    } else {
+      await localDb.collection(collection2).doc(key).delete();
+      console.log("delete doc");
+    }
+  } else if (action === ACTIONS.UPDATE) {
+    try {
+      if (!payload.newDocument)
+        throw new Error("newDocument no definido");
+      await localDb.collection(collection2).doc(key).update(payload.newDocument);
+      console.log("update");
+    } catch (error6) {
+      await localDb.collection(collection2).add(payload.newDocument, key);
+      console.log("add to update");
+    }
+  } else if (action === ACTIONS.SET) {
+    await localDb.collection(collection2).doc(key).set(payload);
+    console.log("set");
+  } else if (action === ACTIONS.DROP) {
+    if (collection2) {
+      await localDb.collection(collection2).delete();
+      console.log("drop collection");
+    } else if (db) {
+      await localDb.delete();
+      console.log("drop db");
+    }
+  }
+}
+
+// localbase/api/actions/readRaw.js
+async function readRaw(data) {
+  if (!data.db)
+    throw new Error("db no definido");
+  if (!data.collection)
+    throw new Error("collection no definido");
+  if (!data.action)
+    throw new Error("action no definido");
+  const { db, collection: collection2, key, action, data: payload } = data;
+  const localDb = new CloudLocalbase(db);
+  localDb.noChange = true;
+  if (action === ACTIONS.GET) {
+    if (!key)
+      return await localDb.collection(collection2).doc(payload).get();
+    return await localDb.collection(collection2).doc(key).get();
+  } else if (action === ACTIONS.GET_ALL) {
+    return await localDb.collection(collection2).get();
+  } else if (action === ACTIONS.GET_WHERE) {
+    return await localDb.collection(collection2).where(payload).get();
+  } else if (action === ACTIONS.SEARCH) {
+    return await localDb.collection(collection2).search(payload);
   }
 }
 
@@ -4610,7 +4759,7 @@ class CloudLocalbase {
     }
     CloudLocalbase.events.emit(`db:${this.dbName}:col:${collection3}`, { key, action, data });
     if (!this.noChange) {
-      CloudLocalbase.transacciones.setItem(CloudLocalbase.uid(), JSON.stringify({ db: this.dbName, collection: collection3, key, action, data, ts: Date.now() })).finally(() => {
+      CloudLocalbase.transacciones.setItem(CloudLocalbase.uid(), { db: this.dbName, collection: collection3, key, action, data, ts: Date.now() }).finally(() => {
         CloudLocalbase.events.emit("change", { db: this.dbName, collection: collection3, key, action, data });
       });
     }
@@ -4621,81 +4770,8 @@ class CloudLocalbase {
   static toTimestamp() {
     return Date.now();
   }
-  static async update(data) {
-    if (!data.db)
-      throw new Error("db no definido");
-    if (!data.collection)
-      throw new Error("collection no definido");
-    if (!data.action)
-      throw new Error("action no definido");
-    const { db, collection: collection3, key, action, data: payload } = data;
-    const localDb = new CloudLocalbase(db);
-    localDb.noChange = true;
-    if (action === ACTIONS.ADD) {
-      if (!key)
-        throw new Error("key no definido");
-      await localDb.collection(collection3).add(payload, key);
-      console.log("add");
-    } else if (action === ACTIONS.DELETE) {
-      if (!key) {
-        await localDb.collection(collection3).delete();
-        console.log("delete colecci\xF3n");
-      } else {
-        await localDb.collection(collection3).doc(key).delete();
-        console.log("delete doc");
-      }
-    } else if (action === ACTIONS.UPDATE) {
-      try {
-        if (!payload.newDocument)
-          throw new Error("newDocument no definido");
-        const doc3 = await localDb.collection(collection3).doc(key).get();
-        if (!doc3)
-          throw new Error("doc no encontrado");
-        const dbResult = [doc3, payload.newDocument];
-        const resolvedObject = dbResult.reduce((prev, current) => {
-          return compareObjects(prev, current) > 0 ? prev : current;
-        });
-        await localDb.collection(collection3).doc(key).update(resolvedObject);
-        console.log("update");
-      } catch (error6) {
-        await localDb.collection(collection3).add(payload.newDocument, key);
-        console.log("add to update");
-      }
-    } else if (action === ACTIONS.SET) {
-      await localDb.collection(collection3).doc(key).set(payload);
-      console.log("set");
-    } else if (action === ACTIONS.DROP) {
-      if (collection3) {
-        await localDb.collection(collection3).delete();
-        console.log("drop collection");
-      } else if (db) {
-        await localDb.delete();
-        console.log("drop db");
-      }
-    }
-  }
-  static async read(data) {
-    if (!data.db)
-      throw new Error("db no definido");
-    if (!data.collection)
-      throw new Error("collection no definido");
-    if (!data.action)
-      throw new Error("action no definido");
-    const { db, collection: collection3, key, action, data: payload } = data;
-    const localDb = new CloudLocalbase(db);
-    localDb.noChange = true;
-    if (action === ACTIONS.GET) {
-      if (!key)
-        return await localDb.collection(collection3).doc(payload).get();
-      return await localDb.collection(collection3).doc(key).get();
-    } else if (action === ACTIONS.GET_ALL) {
-      return await localDb.collection(collection3).get();
-    } else if (action === ACTIONS.GET_WHERE) {
-      return await localDb.collection(collection3).where(payload).get();
-    } else if (action === ACTIONS.SEARCH) {
-      return await localDb.collection(collection3).search(payload);
-    }
-  }
+  static update = updateRaw;
+  static read = readRaw;
   static uid = uid_default;
   static toDateString(timestamp) {
     return new Date(timestamp).toLocaleDateString();
@@ -11162,6 +11238,100 @@ class $416260bce337df90$export$ecd1fc136c422448 extends (0, $23779d1881157a18$ex
 }
 var $dcf98445f54823f4$var$NullValue = Symbol.for(null);
 
+// cloud/logger.js
+var logger11 = {
+  baseStyle: `
+    padding: 2px 5px;
+    background-color: #124F5C;
+    border-radius: 4px;
+    color: white; 
+  `,
+  colors: {
+    log: "#124F5C",
+    error: "#ed2939",
+    warn: "#f39c12"
+  },
+  log(message, secondary) {
+    if (true) {
+      let style = logger11.baseStyle + `background-color: ${logger11.colors.log}`;
+      if (secondary) {
+        console.log("%c CloudBase ", style, message, secondary);
+      } else {
+        console.log("%c CloudBase ", style, message);
+      }
+    }
+  },
+  error(message, secondary) {
+    if (true) {
+      let style = logger11.baseStyle + `background-color: ${logger11.colors.error}`;
+      console.error("%c CloudBase ", style, message);
+    }
+  },
+  warn(message, secondary) {
+    if (true) {
+      let style = logger11.baseStyle + `background-color: ${logger11.colors.warn}`;
+      console.warn("%c CloudBase ", style, message);
+    }
+  }
+};
+var logger_default2 = logger11;
+
+// cloud/received.js
+async function received(data) {
+  const conn = this;
+  logger_default2.log("data received", data);
+  if (data.event === "change") {
+    await Cloud.intance.Localbase.update(data.data);
+    conn.send({ event: "recovery_end", data: Date.now() });
+  }
+  if (data.event === "recovery_pull") {
+    Cloud.intance.Localbase.transacciones.iterate((value, key) => {
+      if (value.ts >= data.data) {
+        conn.send({ event: "recovery_data", data: value });
+      }
+    }).then(() => {
+      conn.send({ event: "recovery_end", data: Date.now() });
+    });
+  }
+  if (data.event === "recovery_data") {
+    await Cloud.intance.Localbase.update(data.data);
+  }
+  if (data.event === "read") {
+    const results = await Cloud.intance.Localbase.read(data.data);
+    conn.send({ event: "read_result", data: results });
+  }
+  if (data.event === "recovery_end") {
+    await Cloud.intance.Localbase.iDB.setItem(`last_coneccion_${conn.peer}`, data.data);
+  }
+}
+
+// cloud/openPeer.js
+async function openPeer() {
+  const cone = this;
+  logger_default2.log("coneccion abierta =>", cone.peer);
+  Cloud.intance.connecciones = Cloud.intance.connecciones.filter((conn) => conn.peer !== cone.peer);
+  Cloud.intance.connecciones.push(cone);
+  const last_coneccion = await Cloud.intance.Localbase.iDB.getItem(`last_coneccion_${cone.peer}`);
+  if (last_coneccion) {
+    cone.send({ event: "recovery_pull", data: last_coneccion });
+    Cloud.intance.Localbase.transacciones.iterate((value, key) => {
+      if (value.ts >= last_coneccion) {
+        logger_default2.log("isMayor", key);
+        cone.send({ event: "recovery_data", data: value });
+      }
+    }).then(() => {
+      cone.send({ event: "recovery_end", data: Date.now() });
+    });
+  } else {
+    Cloud.intance.Localbase.transacciones.iterate((value, key) => {
+      cone.send({ event: "recovery_data", data: value });
+    }).then(() => {
+      cone.send({ event: "recovery_end", data: Date.now() });
+      Cloud.intance.Localbase.iDB.setItem(`last_coneccion_${cone.peer}`, Date.now());
+    });
+  }
+}
+
 // cloud/cloud.js
 class Cloud {
   #resolverPromesa = null;
@@ -11189,12 +11359,11 @@ class Cloud {
     if (!this.config.host)
       throw new Error("host no definido");
     if (!this.config.debug)
-      this.config.debug = 1;
+      this.config.debug = 0;
     this.promesaConexion = new Promise((resolve, reject) => {
       this.#resolverPromesa = resolve;
     });
     const changes = (data) => {
-      console.log("notificando cambios");
       this.connecciones.forEach((conn) => {
         if (conn.open)
           conn.send({ event: "change", data });
@@ -11226,55 +11395,33 @@ class Cloud {
         this.#resolverPromesa();
       });
       this.peer.on("connection", (conn) => {
-        console.log("connection", conn.peer);
+        logger_default2.log("connection", conn.peer);
         this.connecciones = this.connecciones.filter((conn2) => conn2.peer !== conn2.peer);
         this.connecciones.push(conn);
-        conn.on("data", async (data) => {
-          console.log("data received", data);
-          if (data.event === "change") {
-            await this.Localbase.update(data.data, this.peer.id);
-          }
-          if (data.event === "recovery_pull") {
-            this.Localbase.transacciones.iterate((value, key) => {
-              if (key >= data.data) {
-                conn.send({ event: "recovery_data", data: value });
-              }
-            }).then(() => {
-              conn.send({ event: "recovery_end", data: Date.now() });
-            });
-          }
-          if (data.event === "recovery_data") {
-            await this.Localbase.update(JSON.parse(data.data), this.peer.id);
-          }
-          if (data.event === "read") {
-            const results = await this.Localbase.read(data.data);
-            conn.send({ event: "read_result", data: results });
-          }
-          if (data.event === "recovery_end") {
-            console.log("recovery_end", data);
-          }
-        });
+        conn.on("data", received);
         conn.on("close", () => {
-          console.log("close", conn.peer);
+          logger_default2.log("close", conn.peer);
           this.connecciones = this.connecciones.filter((conn2) => conn2.peer !== conn2.peer);
         });
       });
       this.peer.on("error", (error6) => {
-        console.log("[CLOUD ] name: ", error6.name, ", message: ", error6.message, ", type: ", error6.type);
+        logger_default2.error("[CLOUD ] name: " + error6.name + ", message: " + error6.message + ", type: " + error6.type);
         if (error6.type === "network") {
           this.Localbase.iDB.setItem("last_coneccion", this.Localbase.uid());
+          logger_default2.warn("network");
+          this.#resolverPromesa();
         }
         if (error6.type === "unavailable-id") {
-          console.warn("unavailable-id");
+          logger_default2.warn("unavailable-id");
           this.Localbase.iDB.setItem("last_coneccion", this.Localbase.uid());
+          this.#resolverPromesa();
         }
         if (error6.type === "peer-unavailable") {
-          console.warn("peer-unavailable");
+          logger_default2.warn("peer-unavailable");
           this.connecciones = this.connecciones.filter((conn) => conn.open);
           this.Localbase.iDB.setItem("peers", JSON.stringify(this.connecciones.map((conn) => ({ nodeId: conn.peer, label: conn.label }))));
           return;
         }
-        this.Localbase.events.off("change", changes);
       });
     });
     Cloud.intance = this;
@@ -11328,35 +11475,23 @@ class Cloud {
     await Cloud.intance.Localbase.iDB.setItem("peers", JSON.stringify(peers));
   }
   static async conectar() {
-    console.log("conectando");
     const peers = await Cloud.intance.getPeers();
     const peersNoConectados = peers.filter((peer) => !Cloud.intance.connecciones.find((conn) => conn.peer === peer.nodeId));
-    const last_coneccion = await Cloud.intance.Localbase.iDB.getItem("last_coneccion");
     for (const { nodeId, label } of peersNoConectados) {
-      const cone = Cloud.intance.peer.connect(nodeId, { label, reliable: true });
-      cone.on("error", (error6) => {
-        console.error("error cone", error6);
-      });
-      cone.on("close", () => {
-        console.log("cone", cone.peer, cone.open);
-        Cloud.intance.connecciones = Cloud.intance.connecciones.filter((conn) => conn.peer !== cone.peer);
-      });
-      cone.on("open", () => {
-        console.log("coneccion abierta =>", cone.peer);
-        Cloud.intance.connecciones = Cloud.intance.connecciones.filter((conn) => conn.peer !== cone.peer);
-        Cloud.intance.connecciones.push(cone);
-        if (last_coneccion) {
-          cone.send({ event: "recovery_pull", data: last_coneccion });
-          Cloud.intance.Localbase.transacciones.iterate((value, key) => {
-            if (key >= last_coneccion) {
-              console.log("isMayor", key);
-              cone.send({ event: "recovery_data", data: value });
-            }
-          }).then(() => {
-            cone.send({ event: "recovery_end", data: Date.now() });
-          });
-        }
-      });
+      try {
+        const cone = Cloud.intance.peer.connect(nodeId, { label, reliable: true });
+        cone.on("error", (error6) => {
+          logger_default2.error("error cone", error6);
+        });
+        cone.on("close", () => {
+          logger_default2.log("cone", cone.peer, cone.open);
+          Cloud.intance.connecciones = Cloud.intance.connecciones.filter((conn) => conn.peer !== cone.peer);
+        });
+        cone.on("open", openPeer);
+        cone.on("data", received);
+      } catch (error6) {
+        logger_default2.warn("coneccion error");
+      }
     }
   }
 }

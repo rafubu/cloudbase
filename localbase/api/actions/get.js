@@ -155,7 +155,7 @@ export default function get(options = { keys: false }) {
     // get document by key
     this.getDocumentByKey = () => {
       return this.lf[collectionName].getItem(docSelectionCriteria).then((value) => {
-        document = value.data || value
+        document = this.noChange ? value : value.data || value
         if (document) {
           logger.log.call(this, `Got Document with key ${ JSON.stringify(docSelectionCriteria) }:`, document)
         }

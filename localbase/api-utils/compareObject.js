@@ -1,4 +1,4 @@
-function compareObjects(a, b) {
+export function compareObjects(a, b) {
   // Comparamos por timestamp
   if (a.updatedAt < b.updatedAt) {
     return -1;
@@ -25,8 +25,12 @@ function compareObjects(a, b) {
     } else if (!aWins && bWins) {
       return 1;
     } else {
-      // En caso de empate en los relojes vectoriales, resolvemos por ID del nodo
-      return a._nodeId.localeCompare(b._nodeId);
+      if(a._nodeId && b._nodeId) {
+        // En caso de empate en los relojes vectoriales, resolvemos por ID del nodo
+        return a._nodeId.localeCompare(b._nodeId);
+      }else{
+        return 0;
+      }
     }
   }
 }

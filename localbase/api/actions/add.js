@@ -85,6 +85,10 @@ export default function add(data, keyProvided) {
         datos.data = data;
       }
 
+      if(!datos.data.id){
+        datos.data.id = key;
+      }
+
       return this.lf[collectionName].setItem(key, datos ).then(async () => {
 
         this.change(collectionName, ACTIONS.ADD, datos, key);
@@ -97,6 +101,7 @@ export default function add(data, keyProvided) {
           )
         )
       }).catch(err => {
+        //console.trace(err)
         reject(
           error.call(
             this,
