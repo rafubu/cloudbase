@@ -1,5 +1,6 @@
 "use strict"
 import localForage from "localforage";
+
 import { increment, arrayRemove, arrayUnion } from './api/actions/preactions.js'
 
 // import api methods
@@ -11,24 +12,31 @@ import orderBy from './api/filters/orderBy.js'
 import limit from './api/filters/limit.js'
 import contains from './api/filters/contains.js'
 
+// actions
 import get from './api/actions/get.js'
 import add from './api/actions/add.js'
 import update from './api/actions/update.js'
 import set from './api/actions/set.js'
 import deleteIt from './api/actions/delete.js'
 import search from './api/actions/search.js'
-import uid from './api-utils/uid.js'
 import where from './api/filters/where.js'
+import backup from "./api/actions/backup.js";
+
+//util
+import uid from './api-utils/uid.js'
 
 // observer
 import on from './api/observer/on.js'
 import off from './api/observer/off.js'
 
+// events
 import mitt from 'mitt'
-import { ACTIONS } from "./api-utils/Constant.js";
 import updateCache from "./api-utils/updateCache.js";
 import { updateRaw } from "./api/actions/updateRaw.js";
 import { readRaw } from "./api/actions/readRaw.js";
+import porPage from "./api/pagination/porPage.js";
+import page from "./api/pagination/page.js";
+import count from "./api/actions/count.js";
 
 export default class CloudLocalbase {
   static nodeId = null
@@ -66,12 +74,10 @@ export default class CloudLocalbase {
     this.limitBy = null
     this.docSelectionCriteria = null
     this.noChange = false;
-
-    this.containsProperty = null
-    this.containsValue = null
-    this.containsExact = false
-    this.containsSinError = false
+    this.porPag = Infinity;
+    this.currentPage = 0;
     this.whereArguments = []
+    this.whereCount = 0
 
     // queues
     this.deleteCollectionQueue = {
@@ -104,21 +110,22 @@ export default class CloudLocalbase {
     this.update = update.bind(this)
     this.set = set.bind(this);
     this.delete = deleteIt.bind(this);
+    this.search = search.bind(this);
+    this.count = count.bind(this);
 
     // api - observer
     this.on = on.bind(this)
     this.off = off.bind(this)
 
-    this.search = search.bind(this);
+    // api - pagination
+    this.porPage = porPage.bind(this);
+    this.page = page.bind(this);
 
     //util - uid
     this.uid = uid.bind(this);
   }
 
-  change( collection, action, data, key ) {
-
-    //console.log('change localbase', collection, action, data, key);
-
+  change(collection, action, data, key) {
     if (!!key) {
       CloudLocalbase.events.emit(`doc:${key}`, { action, data });
       updateCache(this.dbName, collection, key, action, data);
@@ -141,11 +148,13 @@ export default class CloudLocalbase {
     return Date.now();
   }
 
-  static update = updateRaw 
+  static update = updateRaw
 
   static read = readRaw
 
   static uid = uid
+
+  static backup = backup;
 
   static toDateString(timestamp) {
     return new Date(timestamp).toLocaleDateString();

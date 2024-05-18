@@ -8,6 +8,7 @@ const ACTIONS = {
   GET_ALL: 'getAll',
   GET_WHERE: 'getWhere',
   SEARCH: 'search',
+  COUNT: 'count',
 }
 export {
   ACTIONS

@@ -3501,9 +3501,10 @@ function reset() {
   this.limitBy = null;
   this.docSelectionCriteria = null;
   this.userErrors = [];
-  this.containsProperty = null;
-  this.containsValue = null;
   this.whereArguments = [];
+  this.currentPage = 0;
+  this.porPag = Infinity;
+  this.whereCount = 0;
 }
 
 // localbase/api-utils/selectionLevel.js
@@ -3527,96 +3528,113 @@ function showUserErrors() {
 }
 
 // localbase/api-utils/cumpleCriterio.js
+var import_fuzzysort = __toESM(require_fuzzysort(), 1);
 var sonStrings = function(valor1, valor2) {
   return typeof valor1 === "string" && typeof valor2 === "string";
 };
 var cumple = function(objeto, criterio) {
-  for (const [clave, valor] of Object.entries(criterio)) {
-    switch (true) {
-      case (clave.endsWith("_eq") || !clave.includes("_")):
-        if (objeto[clave.replace("_eq", "")] !== valor) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_lt"):
-        if (!(objeto[clave.replace("_lt", "")] < valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_gt"):
-        if (!(objeto[clave.replace("_gt", "")] > valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_lte"):
-        if (!(objeto[clave.replace("_lte", "")] <= valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_gte"):
-        if (!(objeto[clave.replace("_gte", "")] >= valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_contains"):
-        if (sonStrings(objeto[clave.replace("_contains", "")], valor)) {
-          const valorObjeto2 = String(objeto[clave.replace("_contains", "")]).toLowerCase();
-          if (!valorObjeto2.includes(valor.toLowerCase())) {
+  try {
+    for (const [clave, valor] of Object.entries(criterio)) {
+      switch (true) {
+        case (clave.endsWith("_eq") || !clave.includes("_")):
+          if (objeto[clave.replace("_eq", "")] !== valor) {
             return false;
           }
-        } else if (!objeto[clave.replace("_contains", "")].includes(valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_startsWith"):
-        if (!objeto[clave.replace("_startsWith", "")].startsWith(valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_endsWith"):
-        if (!objeto[clave.replace("_endsWith", "")].endsWith(valor)) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_in"):
-        if (!valor.includes(objeto[clave.replace("_in", "")])) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_nin"):
-        if (valor.includes(objeto[clave.replace("_nin", "")])) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_neq"):
-        if (objeto[clave.replace("_neq", "")] === valor) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_null"):
-        if (objeto[clave.replace("_null", "")] !== null) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_notNull"):
-        if (objeto[clave.replace("_notNull", "")] === null) {
-          return false;
-        }
-        break;
-      case clave.endsWith("_between"):
-        const [min, max] = valor;
-        const valorObjeto = objeto[clave.replace("_between", "")];
-        if (valorObjeto < min || valorObjeto > max) {
-          return false;
-        }
-        break;
-      default:
-        break;
+          break;
+        case clave.endsWith("_lt"):
+          if (!(objeto[clave.replace("_lt", "")] < valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_gt"):
+          if (!(objeto[clave.replace("_gt", "")] > valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_lte"):
+          if (!(objeto[clave.replace("_lte", "")] <= valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_gte"):
+          if (!(objeto[clave.replace("_gte", "")] >= valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_contains"):
+          if (sonStrings(objeto[clave.replace("_contains", "")], valor)) {
+            const valorObjeto2 = String(objeto[clave.replace("_contains", "")]).toLowerCase();
+            if (!valorObjeto2.includes(valor.toLowerCase())) {
+              return false;
+            }
+          } else if (!objeto[clave.replace("_contains", "")].includes(valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_search"):
+          if (sonStrings(objeto[clave.replace("_search", "")], valor)) {
+            const valorObjeto2 = String(objeto[clave.replace("_search", "")]).toLowerCase();
+            if (!import_fuzzysort.single(valor.toLowerCase(), valorObjeto2)) {
+              return false;
+            }
+          } else if (!objeto[clave.replace("_search", "")].includes(valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_startsWith"):
+          if (!objeto[clave.replace("_startsWith", "")].startsWith(valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_endsWith"):
+          if (!objeto[clave.replace("_endsWith", "")].endsWith(valor)) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_in"):
+          if (!valor.includes(objeto[clave.replace("_in", "")])) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_nin"):
+          if (valor.includes(objeto[clave.replace("_nin", "")])) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_neq"):
+          if (objeto[clave.replace("_neq", "")] === valor) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_null"):
+          if (objeto[clave.replace("_null", "")] !== null) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_notNull"):
+          if (objeto[clave.replace("_notNull", "")] === null) {
+            return false;
+          }
+          break;
+        case clave.endsWith("_between"):
+          const [min, max] = valor;
+          const valorObjeto = objeto[clave.replace("_between", "")];
+          if (valorObjeto < min || valorObjeto > max) {
+            return false;
+          }
+          break;
+        default:
+          break;
+      }
     }
+    return true;
+  } catch (error) {
+    return false;
   }
-  return true;
 };
 function cumpleCriterios(objeto) {
+  if (this.whereCount === 0)
+    return true;
   for (const criterio of this.whereArguments) {
     if (cumple(objeto, criterio))
       return true;
@@ -3624,7 +3642,7 @@ function cumpleCriterios(objeto) {
 }
 
 // localbase/api/actions/get.js
-var import_fuzzysort = __toESM(require_fuzzysort(), 1);
+var import_fuzzysort2 = __toESM(require_fuzzysort(), 1);
 
 // localbase/api-utils/inChache.js
 function kche(db, collection2) {
@@ -3651,14 +3669,12 @@ async function readFromCacheOrDisk({ db, collectionName, lf }, callback) {
     for (const objeto of cache2) {
       callback(objeto, objeto._id);
     }
-    console.log("Le\xEDdo desde la cach\xE9");
     return;
   }
   const cache = await loadKcheFromDisk(db, collectionName, lf);
   for (const objeto of cache) {
     callback(objeto, objeto._id);
   }
-  console.log("Le\xEDdo desde el disco", cache.length);
 }
 async function loadKcheFromDisk(db, collectionName, lf) {
   if (!CloudLocalbase.cache[db])
@@ -3679,92 +3695,47 @@ function get(options = { keys: false }) {
     let orderByProperty = this.orderByProperty;
     let orderByDirection = this.orderByDirection;
     let limitBy = this.limitBy;
-    let containsProperty = this.containsProperty;
-    let containsValue = this.containsValue;
-    let containsExact = this.containsExact;
-    let containsSinError = this.containsSinError;
-    let whereArguments = this.whereArguments;
-    const cuantosWhere = whereArguments.length;
-    if (cuantosWhere > 10)
-      throw new Error("No se pueden usar mas de 10 where en una consulta");
+    let page = this.currentPage;
+    let porPag = this.porPag;
     let logMessage;
     let collection2 = [];
     return readFromCacheOrDisk({ db: this.dbName, collectionName, lf: this.lf }, (value, key) => {
       const data = value.data || value;
       let collectionItem = {};
       if (!options.keys) {
-        collectionItem = data;
+        collectionItem = this.noChange ? value : data;
       } else {
         collectionItem = {
           key,
-          data
+          data: this.noChange ? value : data
         };
       }
       logMessage = `Got "${collectionName}" collection`;
-      if (containsProperty) {
-        let valor = data[containsProperty];
-        try {
-          if (typeof valor !== undefined) {
-            if (typeof valor === "boolean" && typeof containsValue === "boolean") {
-              if (valor === containsValue) {
-                collection2.push(collectionItem);
-              }
-            } else if (typeof valor === "string" && typeof containsValue === "string") {
-              const val = String(valor).toLowerCase();
-              const cVal = String(containsValue).toLowerCase();
-              if (!containsExact) {
-                if (containsSinError && val.includes(cVal)) {
-                  collection2.push(collectionItem);
-                } else {
-                  const search = import_fuzzysort.single(cVal, val);
-                  if (search) {
-                    collection2.push(collectionItem);
-                  }
-                }
-              } else if (val === cVal)
-                collection2.push(collectionItem);
-              if (limitBy) {
-                if (collection2.length > limitBy + 10) {
-                  logMessage += `, limited to contains is ${limitBy} `;
-                  return collection2;
-                }
-              }
-            } else if (typeof valor === "number" && typeof containsValue === "number") {
-              if (valor === containsValue)
-                collection2.push(collectionItem);
-            }
-            logMessage += `, contains: "${containsValue}" in "${containsProperty}"`;
-          }
-        } catch (error) {
-          this.userErrors.push(`Constain():${error.message}`);
-        }
-      } else if (typeof data === "object" && cuantosWhere) {
+      if (typeof data === "object") {
         cumpleCriterios.call(this, data) && collection2.push(collectionItem);
-        if (limitBy) {
-          if (collection2.length > limitBy + 10) {
-            logMessage += `, limited to contains is ${limitBy} `;
-            return collection2;
-          }
-        }
-      } else {
-        collection2.push(collectionItem);
       }
     }).then(() => {
       if (orderByProperty) {
         logMessage += `, ordered by "${orderByProperty}"`;
         if (!options.keys) {
           collection2.sort((a, b) => {
-            return a[orderByProperty].toString().localeCompare(b[orderByProperty].toString());
+            return this.noChange ? a.data[orderByProperty].toString().localeCompare(b.data[orderByProperty].toString()) : a[orderByProperty].toString().localeCompare(b[orderByProperty].toString());
           });
         } else {
           collection2.sort((a, b) => {
-            return a.data[orderByProperty].toString().localeCompare(b.data[orderByProperty].toString());
+            return this.noChange ? a.data.data[orderByProperty].toString().localeCompare(b.data.data[orderByProperty].toString()) : a.data[orderByProperty].toString().localeCompare(b.data[orderByProperty].toString());
           });
         }
       }
       if (orderByDirection == "desc") {
         logMessage += ` (descending)`;
         collection2.reverse();
+      }
+      if (porPag < Infinity) {
+        let start = (page - 1) * porPag;
+        let end = start + porPag;
+        collection2 = collection2.slice(start, end);
+        logMessage += `, page ${page}`;
       }
       if (limitBy) {
         logMessage += `, limited to ${limitBy}`;
@@ -3783,7 +3754,7 @@ function get(options = { keys: false }) {
     let document = {};
     this.getDocumentByCriteria = () => {
       return readFromCacheOrDisk({ db: this.dbName, collectionName, lf: this.lf }, (value, key) => {
-        const data = value.data || value;
+        const data = this.noChange ? value : value.data || value;
         if (isSubset(data, docSelectionCriteria)) {
           collection2.push(data);
         }
@@ -3862,7 +3833,7 @@ function error(message) {
 }
 
 // localbase/api/actions/add.js
-var import_fuzzysort2 = __toESM(require_fuzzysort(), 1);
+var import_fuzzysort3 = __toESM(require_fuzzysort(), 1);
 
 // localbase/api-utils/StringInObject.js
 function StringInObject_default(value) {
@@ -3889,7 +3860,8 @@ var ACTIONS = {
   GET: "get",
   GET_ALL: "getAll",
   GET_WHERE: "getWhere",
-  SEARCH: "search"
+  SEARCH: "search",
+  COUNT: "count"
 };
 
 // localbase/api/actions/add.js
@@ -3911,13 +3883,12 @@ function add(data, keyProvided) {
       }
       try {
         if (data._prepared_ === undefined) {
-          datos._prepared_ = import_fuzzysort2.prepare(StringInObject_default(data));
+          datos._prepared_ = import_fuzzysort3.prepare(StringInObject_default(data));
         } else {
           datos._prepared_ = data._prepared_;
           delete data._prepared_;
         }
       } catch (error3) {
-        console.trace(error3);
         logger_default.error.call(this, error3.message);
       }
       const ts = Date.now();
@@ -3963,9 +3934,9 @@ function add(data, keyProvided) {
 
 // localbase/utils/updateObject.js
 function updateObject(obj) {
-  for (var i = 1;i < arguments.length; i++) {
-    for (var prop in arguments[i]) {
-      var val = arguments[i][prop];
+  for (let i = 1;i < arguments.length; i++) {
+    for (let prop in arguments[i]) {
+      const val = arguments[i][prop];
       obj[prop] = val;
     }
   }
@@ -4045,28 +4016,45 @@ function compareObjects(a, b) {
 }
 
 // localbase/api/actions/update.js
-var import_fuzzysort3 = __toESM(require_fuzzysort(), 1);
+var import_fuzzysort4 = __toESM(require_fuzzysort(), 1);
 function update(docUpdates) {
   let collectionName = this.collectionName;
   let docSelectionCriteria = this.docSelectionCriteria;
-  let whereArguments = this.whereArguments;
   let nodeId = this.nodeId;
-  const cuantosWhere = whereArguments.length;
-  if (cuantosWhere > 10)
-    throw new Error("No se pueden usar mas de 10 where en una consulta");
+  let whereCount = this.whereCount;
   return new Promise((resolve, reject) => {
-    this.updateDocumentByCriteria = (isWhere = false) => {
+    this.actualizarDataDefault = (documento) => {
+      documento.updatedAt = Date.now();
+      if (documento._prepared_) {
+        documento._prepared_ = import_fuzzysort4.prepare(StringInObject_default(documento.data));
+      }
+      if (nodeId) {
+        documento.nodeId = nodeId;
+        if (documento.clock) {
+          if (documento.clock[nodeId]) {
+            documento.clock[nodeId]++;
+          } else {
+            documento.clock[nodeId] = 1;
+          }
+        }
+      }
+      return documento;
+    };
+    this.updateDocumentByCriteria = () => {
       let docsToUpdate = [];
       this.lf[collectionName].iterate((value, key) => {
-        let oldDocument = value;
-        const dataAUpdated = validarYEjecutarFunciones.call(this, docUpdates, oldDocument);
-        if (!isWhere) {
+        const oldDocument = JSON.parse(JSON.stringify(value));
+        const oldData = JSON.parse(JSON.stringify(value.data || {}));
+        const dataAUpdated = validarYEjecutarFunciones.call(this, docUpdates, oldData);
+        if (whereCount === 0) {
           if (isSubset(dataAUpdated, docSelectionCriteria)) {
-            let newDocument = updateObject(value, dataAUpdated);
+            const newData = updateObject(oldData, dataAUpdated);
+            const newDocument = this.actualizarDataDefault({ ...oldDocument, data: newData });
             docsToUpdate.push({ key, newDocument, oldDocument });
           }
-        } else if (cumpleCriterios.call(this, value)) {
-          let newDocument = updateObject(value, dataAUpdated);
+        } else if (cumpleCriterios.call(this, oldData)) {
+          const newData = updateObject(oldData, dataAUpdated);
+          const newDocument = this.actualizarDataDefault({ ...oldDocument, data: newData });
           docsToUpdate.push({ key, newDocument, oldDocument });
         }
       }).then(() => {
@@ -4092,20 +4080,10 @@ function update(docUpdates) {
     this.updateDocumentByKey = () => {
       let docToUpdate = { key: docSelectionCriteria };
       this.lf[collectionName].getItem(docSelectionCriteria).then((value) => {
-        docToUpdate.oldDocument = value;
-        const dataAUpdated = validarYEjecutarFunciones.call(this, docUpdates, docToUpdate.oldDocument.data);
-        docToUpdate.newDocument = { ...value, data: updateObject(JSON.parse(JSON.stringify(docToUpdate.oldDocument.data)), dataAUpdated) };
-        docToUpdate.newDocument.updatedAt = Date.now();
-        if (docToUpdate.newDocument.clock) {
-          if (docToUpdate.newDocument.clock[nodeId]) {
-            docToUpdate.newDocument.clock[nodeId]++;
-          } else {
-            docToUpdate.newDocument.clock[nodeId] = 1;
-          }
-        }
-        if (docToUpdate.newDocument._prepared_) {
-          docToUpdate.newDocument._prepared_ = import_fuzzysort3.prepare(StringInObject_default(docToUpdate.newDocument.data));
-        }
+        docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));
+        const oldData = JSON.parse(JSON.stringify(value.data || {}));
+        const newData = validarYEjecutarFunciones.call(this, docUpdates, oldData);
+        docToUpdate.newDocument = this.actualizarDataDefault({ ...value, data: updateObject(oldData, newData) });
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument);
         this.change(collectionName, ACTIONS.UPDATE, docToUpdate, docToUpdate.key);
         resolve(success.call(this, `Document in "${collectionName}" collection with key ${JSON.stringify(docSelectionCriteria)} updated.`, docToUpdate.newDocument));
@@ -4127,6 +4105,7 @@ function update(docUpdates) {
         const resolvedObject = dbResult.reduce((prev, current) => {
           return compareObjects(prev, current) > 0 ? prev : current;
         });
+        resolvedObject.nodeId = nodeId;
         docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));
         docToUpdate.newDocument = JSON.parse(JSON.stringify(resolvedObject));
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument);
@@ -4143,10 +4122,8 @@ function update(docUpdates) {
     }
     if (!this.userErrors.length) {
       if (typeof docSelectionCriteria == "object") {
-        if (docSelectionCriteria !== null) {
+        if (docSelectionCriteria !== null || this.whereCount > 0) {
           this.updateDocumentByCriteria();
-        } else if (cuantosWhere) {
-          this.updateDocumentByCriteria(true);
         }
       } else {
         if (this.noChange) {
@@ -4175,7 +4152,6 @@ function set(newDocument, options = { keys: false }) {
           });
           resolve(success.call(this, `Collection "${collectionName}" set with ${newDocument.length} Documents.`, newDocument));
         } else {
-          console.log("keys provided");
           let docsWithoutKey = 0;
           newDocument.forEach((doc2) => {
             if (!doc2.hasOwnProperty("_key")) {
@@ -4294,8 +4270,8 @@ function deleteIt() {
             this.change(collectionToDelete, ACTIONS.DROP, null, null);
             this.deleteNextCollectionFromQueue();
             resolve(success.call(this, `Collection "${collectionToDelete}" deleted.`, { collection: collectionToDelete }));
-          }).catch((error6) => {
-            reject(error6.call(this, `Collection "${collectionToDelete}" could not be deleted.`));
+          }).catch((er) => {
+            reject(error.call(this, `Collection "${collectionToDelete}" could not be deleted.`));
           });
         } else {
           this.deleteCollectionQueue.running = false;
@@ -4368,14 +4344,13 @@ function deleteIt() {
 }
 
 // localbase/api/actions/search.js
-var import_fuzzysort4 = __toESM(require_fuzzysort(), 1);
+var import_fuzzysort5 = __toESM(require_fuzzysort(), 1);
 async function search(query = "", inKeys = [], options = { highlights: true }) {
   if (!query)
     return logger_default.error.call(this, "query in search is empty");
   if (typeof options !== "object")
     return logger_default.error.call(this, "no valid options");
   this.buscar = async () => {
-    console.time("buscar");
     let dbName = this.dbName;
     let collectionName = this.collectionName;
     if (!CloudLocalbase.times[dbName])
@@ -4387,9 +4362,7 @@ async function search(query = "", inKeys = [], options = { highlights: true }) {
     } else {
       if (!CloudLocalbase.times[dbName])
         CloudLocalbase.times[dbName] = {};
-      console.time("cargando_cache");
       await loadKcheFromDisk(dbName, collectionName, this.lf);
-      console.timeEnd("cargando_cache");
     }
     CloudLocalbase.times[dbName][collectionName] = setTimeout(() => {
       delete CloudLocalbase.cache[dbName][collectionName];
@@ -4401,9 +4374,8 @@ async function search(query = "", inKeys = [], options = { highlights: true }) {
       key: Array.isArray(inKeys) && inKeys.length ? null : "_prepared_",
       keys: Array.isArray(inKeys) && inKeys.length ? inKeys : null
     };
-    const results = import_fuzzysort4.go(query, kche(dbName, collectionName), optionsFuzzy);
+    const results = import_fuzzysort5.go(query, kche(dbName, collectionName), optionsFuzzy);
     logger_default.log.call(this, "SEARCHS", results.length);
-    console.timeEnd("buscar");
     reset.call(this);
     return results.map((o) => o.obj && o.obj.data ? o.obj.data : o.obj);
   };
@@ -4428,6 +4400,143 @@ async function search(query = "", inKeys = [], options = { highlights: true }) {
     showUserErrors.call(this);
     return null;
   }
+}
+
+// localbase/api/filters/where.js
+function where(whereSelectionCriteria) {
+  if (!whereSelectionCriteria) {
+    this.userErrors.push('No where criteria specified in where() method. object (with criteria) e.g. { id_eq: 1 }, { id_lt: 5 }, { id_gt: 5 }, { id_lte: 5 }, { id_gte: 5 }, { id_contains: "foo" }, { id_startsWith: "foo" }, { id_endsWith: "foo" }, { id_in: [1, 2, 3] }, { id_nin: [1, 2, 3] }, { id_neq: 1 }, { id_null: true }, { id_notNull: true }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_like: "foo" }, { id_notLike: "foo" }, { id_iLike: "foo" }, { id_notILike: "foo" }, { id_regexp: "foo" }, { id_notRegexp: "foo" }, { id_iRegexp: "foo" }, { id_notIRegexp: "foo" }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }');
+  } else if (typeof whereSelectionCriteria !== "object") {
+    this.userErrors.push("Where criteria specified in where() method must not be a number, boolean or string. Use object (with criteria) e.g. { id: 1 }");
+  } else if (Array.isArray(whereSelectionCriteria)) {
+    this.userErrors.push("Where criteria specified in where() method must not be an array. Use object (with criteria) e.g. { id: 1 }");
+  } else if (this.whereArguments.length > 10) {
+    this.userErrors.push("You can only have 10 where clauses");
+  }
+  this.whereArguments.push(whereSelectionCriteria);
+  this.whereCount = this.whereArguments.length;
+  return this;
+}
+
+// localbase/utils/Json.js
+function minificarJSON(data, claveMinificada = {}, acum = false) {
+  if (data instanceof Array) {
+    return { jsonMinificado: data.map((d) => minificarJSON(d, claveMinificada, true)), claveMinificada };
+  }
+  let jsonString = JSON.stringify(data);
+  jsonString = jsonString.replace(/"([^"]+)":/g, function(match, clave) {
+    if (!claveMinificada[clave]) {
+      let indice = Object.keys(claveMinificada).length;
+      const nuevaClave = generarClaveSecuencial(indice++);
+      claveMinificada[clave] = nuevaClave;
+      return '"' + nuevaClave + '":';
+    } else {
+      return '"' + claveMinificada[clave] + '":';
+    }
+  });
+  const jsonMinificado = JSON.parse(jsonString);
+  return acum ? jsonMinificado : { jsonMinificado, claveMinificada };
+}
+function generarClaveSecuencial(indice) {
+  var letras = "abcdefghijklmnopqrstuvwxyz";
+  var base = letras.length;
+  var clave = "";
+  while (indice >= 0) {
+    clave = letras[indice % base] + clave;
+    indice = Math.floor(indice / base) - 1;
+  }
+  return clave;
+}
+
+// localbase/api/actions/backup.js
+async function respaldarBaseDeDatos() {
+  return await new Promise(async (resolve, reject) => {
+    try {
+      const databases = await indexedDB.databases();
+      const dbs = {};
+      for (let i = 0;i < databases.length; i++) {
+        const db = databases[i];
+        const dbName = db.name;
+        dbs[dbName] = await respaldarBaseDeDato(dbName);
+      }
+      resolve(dbs);
+    } catch (error6) {
+      reject(error6);
+    }
+  });
+}
+async function respaldarCollection(dbName, collectionName) {
+  if (!dbName || !collectionName)
+    throw new Error("Faltan argumentos requeridos");
+  const solicitudDeApertura = window.indexedDB.open(dbName);
+  return await new Promise((resolve, reject) => {
+    solicitudDeApertura.onsuccess = function(evento) {
+      const db = evento.target.result;
+      const transaccion = db.transaction(collectionName, "readonly");
+      const almacen = transaccion.objectStore(collectionName);
+      const solicitudCursor = almacen.openCursor();
+      const datos = [];
+      solicitudCursor.onsuccess = function(evento2) {
+        const cursor = evento2.target.result;
+        if (cursor) {
+          datos.push({ key: cursor.key, value: cursor.value });
+          cursor.continue();
+        } else {
+          resolve(datos);
+        }
+      };
+      solicitudCursor.onerror = function(evento2) {
+        reject(evento2.target.error);
+      };
+    };
+    solicitudDeApertura.onerror = function(evento) {
+      reject(evento.target.error);
+    };
+  });
+}
+async function respaldarBaseDeDato(dbName) {
+  return await new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName);
+    request.onsuccess = async function(event) {
+      const db = event.target.result;
+      const storeNames = db.objectStoreNames;
+      const datas = {};
+      for (let i = 0;i < storeNames.length; i++) {
+        datas[storeNames[i]] = await respaldarCollection(dbName, storeNames[i]);
+      }
+      resolve(datas);
+    };
+    request.onerror = function(event) {
+      console.error("Error al abrir la base de datos:", event.target.error);
+      reject(event.target.error);
+    };
+  });
+}
+async function backup(options = {}) {
+  if (!indexedDB)
+    throw new Error("Tu navegador no soporta indexedDB");
+  if (options && typeof options !== "object")
+    throw new Error("Opciones debe ser un objeto");
+  const minify = options.minify || false;
+  if ("db" in options) {
+    if ("collection" in options) {
+      const datos = await respaldarCollection(options.db, options.collection);
+      if (minify) {
+        const claveMinificada = {};
+        const { jsonMinificado } = minificarJSON(datos, claveMinificada);
+        return { claveMinificada, jsonMinificado };
+      }
+      return datos;
+    } else {
+      if (minify) {
+        const claveMinificada = {};
+        const { jsonMinificado } = minificarJSON(await respaldarBaseDeDato(options.db), claveMinificada);
+        return { claveMinificada, jsonMinificado };
+      }
+      return await respaldarBaseDeDato(options.db);
+    }
+  }
+  return await respaldarBaseDeDatos();
 }
 
 // node_modules/uuid/dist/esm-browser/rng.js
@@ -4510,20 +4619,6 @@ var v1_default = v1;
 function uid_default() {
   const unordered = v1_default();
   return unordered.substring(14, 18) + unordered.substring(9, 13) + unordered.substring(0, 8) + unordered.substring(19, 23) + unordered.substring(24, unordered.length);
-}
-
-// localbase/api/filters/where.js
-function where(whereSelectionCriteria) {
-  if (!whereSelectionCriteria) {
-    this.userErrors.push('No where criteria specified in where() method. object (with criteria) e.g. { id_eq: 1 }, { id_lt: 5 }, { id_gt: 5 }, { id_lte: 5 }, { id_gte: 5 }, { id_contains: "foo" }, { id_startsWith: "foo" }, { id_endsWith: "foo" }, { id_in: [1, 2, 3] }, { id_nin: [1, 2, 3] }, { id_neq: 1 }, { id_null: true }, { id_notNull: true }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_like: "foo" }, { id_notLike: "foo" }, { id_iLike: "foo" }, { id_notILike: "foo" }, { id_regexp: "foo" }, { id_notRegexp: "foo" }, { id_iRegexp: "foo" }, { id_notIRegexp: "foo" }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }, { id_between: [1, 10] }, { id_notBetween: [1, 10] }');
-  } else if (typeof whereSelectionCriteria !== "object") {
-    this.userErrors.push("Where criteria specified in where() method must not be a number, boolean or string. Use object (with criteria) e.g. { id: 1 }");
-  } else if (Array.isArray(whereSelectionCriteria)) {
-    this.userErrors.push("Where criteria specified in where() method must not be an array. Use object (with criteria) e.g. { id: 1 }");
-  } else {
-    this.whereArguments.push(whereSelectionCriteria);
-  }
-  return this;
 }
 
 // localbase/api/observer/on.js
@@ -4617,7 +4712,11 @@ function updateCache(db, collection2, key, data, action) {
     }
   } else {
     if (action !== ACTIONS.DELETE) {
-      CloudLocalbase.cache[db][collection2].push(data);
+      if (action === ACTIONS.UPDATE) {
+        CloudLocalbase.cache[db][collection2].push(data.newDocument);
+      } else {
+        CloudLocalbase.cache[db][collection2].push(data);
+      }
     }
   }
 }
@@ -4633,39 +4732,32 @@ async function updateRaw(data) {
   const { db, collection: collection2, key, action, data: payload } = data;
   const localDb = new CloudLocalbase(db);
   localDb.noChange = true;
+  localDb.config.debug = false;
   if (action === ACTIONS.ADD) {
     if (!key)
       throw new Error("key no definido");
     await localDb.collection(collection2).add(payload, key);
-    console.log("add");
   } else if (action === ACTIONS.DELETE) {
     if (!key) {
       await localDb.collection(collection2).delete();
-      console.log("delete colecci\xF3n");
     } else {
       await localDb.collection(collection2).doc(key).delete();
-      console.log("delete doc");
     }
   } else if (action === ACTIONS.UPDATE) {
     try {
       if (!payload.newDocument)
         throw new Error("newDocument no definido");
       await localDb.collection(collection2).doc(key).update(payload.newDocument);
-      console.log("update");
     } catch (error6) {
       await localDb.collection(collection2).add(payload.newDocument, key);
-      console.log("add to update");
     }
   } else if (action === ACTIONS.SET) {
     await localDb.collection(collection2).doc(key).set(payload);
-    console.log("set");
   } else if (action === ACTIONS.DROP) {
     if (collection2) {
       await localDb.collection(collection2).delete();
-      console.log("drop collection");
     } else if (db) {
       await localDb.delete();
-      console.log("drop db");
     }
   }
 }
@@ -4681,6 +4773,7 @@ async function readRaw(data) {
   const { db, collection: collection2, key, action, data: payload } = data;
   const localDb = new CloudLocalbase(db);
   localDb.noChange = true;
+  localDb.config.debug = false;
   if (action === ACTIONS.GET) {
     if (!key)
       return await localDb.collection(collection2).doc(payload).get();
@@ -4691,6 +4784,60 @@ async function readRaw(data) {
     return await localDb.collection(collection2).where(payload).get();
   } else if (action === ACTIONS.SEARCH) {
     return await localDb.collection(collection2).search(payload);
+  } else if (action === ACTIONS.COUNT) {
+    if (payload && typeof payload === "object") {
+      return await localDb.collection(collection2).where(payload).count();
+    }
+    return await localDb.collection(collection2).count();
+  }
+}
+
+// localbase/api/pagination/porPage.js
+function porPage(por = 10) {
+  if (typeof por !== "number") {
+    this.userErrors.push("Valor a buscar no es valido");
+    return this;
+  } else {
+    this.porPag = por;
+    return this;
+  }
+}
+
+// localbase/api/pagination/page.js
+function page(page2 = 1) {
+  if (typeof page2 !== "number") {
+    this.userErrors.push("Valor a buscar no es valido");
+    return this;
+  } else if (page2 < 1) {
+    this.userErrors.push("Valor a buscar no es valido");
+    return this;
+  } else {
+    this.current = page2;
+    return this;
+  }
+}
+
+// localbase/api/actions/count.js
+async function count() {
+  if (this.collectionName === null) {
+    this.userErrors.push("No se ha seleccionado una colecci\xF3n");
+  }
+  if (this.userErrors.length > 0) {
+    showUserErrors.call(this);
+    reset.call(this);
+  }
+  let count2 = 0;
+  try {
+    let collectionName = this.collectionName;
+    let dbName = this.dbName;
+    let lf = this.lf;
+    await readFromCacheOrDisk({ db: dbName, collectionName, lf }, (value, key) => {
+      const data = value.data || value;
+      cumpleCriterios.call(this, data) && count2++;
+    });
+    return count2;
+  } catch (error6) {
+    return count2;
   }
 }
 
@@ -4723,11 +4870,10 @@ class CloudLocalbase {
     this.limitBy = null;
     this.docSelectionCriteria = null;
     this.noChange = false;
-    this.containsProperty = null;
-    this.containsValue = null;
-    this.containsExact = false;
-    this.containsSinError = false;
+    this.porPag = Infinity;
+    this.currentPage = 0;
     this.whereArguments = [];
+    this.whereCount = 0;
     this.deleteCollectionQueue = {
       queue: [],
       running: false
@@ -4747,9 +4893,12 @@ class CloudLocalbase {
     this.update = update.bind(this);
     this.set = set.bind(this);
     this.delete = deleteIt.bind(this);
+    this.search = search.bind(this);
+    this.count = count.bind(this);
     this.on = on.bind(this);
     this.off = off.bind(this);
-    this.search = search.bind(this);
+    this.porPage = porPage.bind(this);
+    this.page = page.bind(this);
     this.uid = uid_default.bind(this);
   }
   change(collection3, action, data, key) {
@@ -4773,6 +4922,7 @@ class CloudLocalbase {
   static update = updateRaw;
   static read = readRaw;
   static uid = uid_default;
+  static backup = backup;
   static toDateString(timestamp) {
     return new Date(timestamp).toLocaleDateString();
   }
@@ -11238,59 +11388,40 @@ class $416260bce337df90$export$ecd1fc136c422448 extends (0, $23779d1881157a18$ex
 }
 var $dcf98445f54823f4$var$NullValue = Symbol.for(null);
 
-// cloud/logger.js
-var logger11 = {
-  baseStyle: `
-    padding: 2px 5px;
-    background-color: #124F5C;
-    border-radius: 4px;
-    color: white; 
-  `,
-  colors: {
-    log: "#124F5C",
-    error: "#ed2939",
-    warn: "#f39c12"
-  },
-  log(message, secondary) {
-    if (true) {
-      let style = logger11.baseStyle + `background-color: ${logger11.colors.log}`;
-      if (secondary) {
-        console.log("%c CloudBase ", style, message, secondary);
-      } else {
-        console.log("%c CloudBase ", style, message);
-      }
-    }
-  },
-  error(message, secondary) {
-    if (true) {
-      let style = logger11.baseStyle + `background-color: ${logger11.colors.error}`;
-      console.error("%c CloudBase ", style, message);
-    }
-  },
-  warn(message, secondary) {
-    if (true) {
-      let style = logger11.baseStyle + `background-color: ${logger11.colors.warn}`;
-      console.warn("%c CloudBase ", style, message);
-    }
-  }
-};
-var logger_default2 = logger11;
-
 // cloud/received.js
+var inRecovery = false;
 async function received(data) {
-  const conn = this;
-  logger_default2.log("data received", data);
+  const cone = this;
   if (data.event === "change") {
     await Cloud.intance.Localbase.update(data.data);
-    conn.send({ event: "recovery_end", data: Date.now() });
+    if (!inRecovery) {
+      cone.send({ event: "recovery_end", data: Date.now() });
+    }
   }
   if (data.event === "recovery_pull") {
+    inRecovery = true;
+    const transacciones = [];
     Cloud.intance.Localbase.transacciones.iterate((value, key) => {
       if (value.ts >= data.data) {
-        conn.send({ event: "recovery_data", data: value });
+        transacciones.push(value);
       }
     }).then(() => {
-      conn.send({ event: "recovery_end", data: Date.now() });
+      const cuantos = transacciones.length;
+      if (cuantos === 0) {
+        cone.send({ event: "recovery_end", data: Date.now() });
+        inRecovery = false;
+      } else {
+        let i = 0;
+        const intervalo = setInterval(() => {
+          cone.send({ event: "recovery_data", data: transacciones[i] });
+          i++;
+          if (i >= cuantos) {
+            clearInterval(intervalo);
+            cone.send({ event: "recovery_end", data: Date.now() });
+            inRecovery = false;
+          }
+        }, 50);
+      }
     });
   }
   if (data.event === "recovery_data") {
@@ -11298,38 +11429,76 @@ async function received(data) {
   }
   if (data.event === "read") {
     const results = await Cloud.intance.Localbase.read(data.data);
-    conn.send({ event: "read_result", data: results });
+    cone.send({ event: "read_result", data: results });
   }
   if (data.event === "recovery_end") {
-    await Cloud.intance.Localbase.iDB.setItem(`last_coneccion_${conn.peer}`, data.data);
+    await Cloud.intance.Localbase.iDB.setItem(`last_coneccion_${cone.peer}`, data.data);
   }
 }
 
 // cloud/openPeer.js
 async function openPeer() {
   const cone = this;
-  logger_default2.log("coneccion abierta =>", cone.peer);
   Cloud.intance.connecciones = Cloud.intance.connecciones.filter((conn) => conn.peer !== cone.peer);
   Cloud.intance.connecciones.push(cone);
   const last_coneccion = await Cloud.intance.Localbase.iDB.getItem(`last_coneccion_${cone.peer}`);
+  const transacciones = [];
   if (last_coneccion) {
     cone.send({ event: "recovery_pull", data: last_coneccion });
     Cloud.intance.Localbase.transacciones.iterate((value, key) => {
       if (value.ts >= last_coneccion) {
-        logger_default2.log("isMayor", key);
-        cone.send({ event: "recovery_data", data: value });
+        transacciones.push(value);
       }
     }).then(() => {
-      cone.send({ event: "recovery_end", data: Date.now() });
+      const cuantos = transacciones.length;
+      if (cuantos === 0) {
+        cone.send({ event: "recovery_end", data: Date.now() });
+      } else {
+        let i = 0;
+        const intervalo = setInterval(() => {
+          cone.send({ event: "recovery_data", data: transacciones[i] });
+          i++;
+          if (i >= cuantos) {
+            clearInterval(intervalo);
+            cone.send({ event: "recovery_end", data: Date.now() });
+          }
+        }, 50);
+      }
     });
   } else {
     Cloud.intance.Localbase.transacciones.iterate((value, key) => {
-      cone.send({ event: "recovery_data", data: value });
+      transacciones.push(value);
     }).then(() => {
-      cone.send({ event: "recovery_end", data: Date.now() });
+      const cuantos = transacciones.length;
+      if (cuantos === 0) {
+        cone.send({ event: "recovery_end", data: Date.now() });
+      } else {
+        let i = 0;
+        const intervalo = setInterval(() => {
+          cone.send({ event: "recovery_data", data: transacciones[i] });
+          i++;
+          if (i >= cuantos) {
+            clearInterval(intervalo);
+            cone.send({ event: "recovery_end", data: Date.now() });
+          }
+        }, 50);
+      }
       Cloud.intance.Localbase.iDB.setItem(`last_coneccion_${cone.peer}`, Date.now());
     });
   }
+}
+
+// cloud/utils/array.js
+function agruparPorKey(array, key) {
+  const resultado = {};
+  array.forEach((objeto) => {
+    const valor = objeto[key];
+    if (!resultado[valor]) {
+      resultado[valor] = [];
+    }
+    resultado[valor].push(objeto);
+  });
+  return resultado;
 }
 
 // cloud/cloud.js
@@ -11395,29 +11564,24 @@ class Cloud {
         this.#resolverPromesa();
       });
       this.peer.on("connection", (conn) => {
-        logger_default2.log("connection", conn.peer);
         this.connecciones = this.connecciones.filter((conn2) => conn2.peer !== conn2.peer);
         this.connecciones.push(conn);
         conn.on("data", received);
         conn.on("close", () => {
-          logger_default2.log("close", conn.peer);
           this.connecciones = this.connecciones.filter((conn2) => conn2.peer !== conn2.peer);
         });
       });
       this.peer.on("error", (error6) => {
-        logger_default2.error("[CLOUD ] name: " + error6.name + ", message: " + error6.message + ", type: " + error6.type);
+        console.warn("[CLOUD ] name: " + error6.name + ", message: " + error6.message + ", type: " + error6.type);
         if (error6.type === "network") {
           this.Localbase.iDB.setItem("last_coneccion", this.Localbase.uid());
-          logger_default2.warn("network");
           this.#resolverPromesa();
         }
         if (error6.type === "unavailable-id") {
-          logger_default2.warn("unavailable-id");
           this.Localbase.iDB.setItem("last_coneccion", this.Localbase.uid());
           this.#resolverPromesa();
         }
         if (error6.type === "peer-unavailable") {
-          logger_default2.warn("peer-unavailable");
           this.connecciones = this.connecciones.filter((conn) => conn.open);
           this.Localbase.iDB.setItem("peers", JSON.stringify(this.connecciones.map((conn) => ({ nodeId: conn.peer, label: conn.label }))));
           return;
@@ -11446,16 +11610,18 @@ class Cloud {
     return JSON.parse(peers);
   }
   async read(query) {
+    const data = await this.Localbase.read(query);
     const peersConectados = this.connecciones.filter((conn) => conn.open);
     const results = {};
-    return new Promise(async (resolve, reject) => {
+    results[this.peer.id] = data;
+    const resultados = await new Promise(async (resolve, reject) => {
       for (const conn of peersConectados) {
         await new Promise((res, rej) => {
           setTimeout(() => rej("timeout"), 1e4);
           conn.send({ event: "read", data: query });
-          conn.on("data", (data) => {
-            if (data.event === "read_result") {
-              results[conn.peer] = data.data;
+          conn.on("data", (data2) => {
+            if (data2.event === "read_result") {
+              results[conn.peer] = data2.data;
               res();
             }
           });
@@ -11463,6 +11629,36 @@ class Cloud {
       }
       resolve(results);
     });
+    let resolver = [];
+    for (const key in resultados) {
+      const result = resultados[key];
+      if (result instanceof Array) {
+        resolver = resolver.concat(result);
+      } else {
+        resolver.push(result);
+      }
+    }
+    console.log("resolver", resolver);
+    const agrupados = agruparPorKey(resolver, "_id");
+    const resultadosFinales = [];
+    for (const key in agrupados) {
+      const grupo = agrupados[key];
+      if (grupo.length > 1) {
+        const resolvedObject = grupo.reduce((prev, current) => {
+          return compareObjects(prev, current) > 0 ? prev : current;
+        });
+        resultadosFinales.push(resolvedObject);
+      } else {
+        resultadosFinales.push(grupo[0]);
+      }
+    }
+    if (resultadosFinales.length === 0) {
+      return null;
+    } else if (resultadosFinales.length === 1) {
+      return resultadosFinales[0];
+    } else {
+      return resultadosFinales;
+    }
   }
   myId() {
     return Cloud.intance.peer.id;
@@ -11481,16 +11677,16 @@ class Cloud {
       try {
         const cone = Cloud.intance.peer.connect(nodeId, { label, reliable: true });
         cone.on("error", (error6) => {
-          logger_default2.error("error cone", error6);
+          console.warn("[CLOUD ] name: " + error6.name + ", message: " + error6.message + ", type: " + error6.type);
         });
         cone.on("close", () => {
-          logger_default2.log("cone", cone.peer, cone.open);
+          console.warn("[CLOUD ] coneccion cerrada");
           Cloud.intance.connecciones = Cloud.intance.connecciones.filter((conn) => conn.peer !== cone.peer);
         });
         cone.on("open", openPeer);
         cone.on("data", received);
       } catch (error6) {
-        logger_default2.warn("coneccion error");
+        console.warn("[CLOUD ] error al conectar", error6);
       }
     }
   }

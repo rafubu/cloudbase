@@ -30,7 +30,6 @@ export default function set(newDocument, options = { keys: false }) {
           )
         }
         else {
-          console.log('keys provided')
           // check that every document in array has a _key property
           let docsWithoutKey = 0
           newDocument.forEach(doc => {

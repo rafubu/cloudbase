@@ -47,7 +47,6 @@ export default function add(data, keyProvided) {
         }
 
       } catch (error) {
-        console.trace(error)
         logger.error.call(this, error.message);
       }
 
@@ -101,7 +100,6 @@ export default function add(data, keyProvided) {
           )
         )
       }).catch(err => {
-        //console.trace(err)
         reject(
           error.call(
             this,

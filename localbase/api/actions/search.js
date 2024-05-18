@@ -20,7 +20,6 @@ export default async function search(query = '',inKeys =[], options = { highligh
   if (typeof options !== 'object') return logger.error.call(this, 'no valid options');
 
   this.buscar = async () => {
-    console.time('buscar')
     let dbName = this.dbName;
     let collectionName = this.collectionName;
 
@@ -31,9 +30,7 @@ export default async function search(query = '',inKeys =[], options = { highligh
       clearTimeout(CloudLocalbase.times[dbName][collectionName])
     } else {
       if(!CloudLocalbase.times[dbName]) CloudLocalbase.times[dbName] = {}
-      console.time('cargando_cache')
       await loadKcheFromDisk(dbName, collectionName, this.lf)
-      console.timeEnd('cargando_cache')
     }
 
     CloudLocalbase.times[dbName][collectionName] = setTimeout(()=>{
@@ -50,7 +47,6 @@ export default async function search(query = '',inKeys =[], options = { highligh
 
     const results = go(query, kche( dbName, collectionName ), optionsFuzzy);
     logger.log.call(this, 'SEARCHS', results.length);
-    console.timeEnd('buscar')
     reset.call(this);
     return results.map(o => o.obj && o.obj.data ? o.obj.data : o.obj);
   }

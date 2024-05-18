@@ -13,7 +13,6 @@ export async function readFromCacheOrDisk( {db, collectionName, lf}, callback ) 
     for (const objeto of cache) {
       callback( objeto, objeto._id);
     }
-    console.log('Leído desde la caché');
     return;
   }
 
@@ -21,7 +20,6 @@ export async function readFromCacheOrDisk( {db, collectionName, lf}, callback ) 
     for (const objeto of cache) {
       callback( objeto, objeto._id);
     }
-    console.log('Leído desde el disco',cache.length);
 }
 
 export async function loadKcheFromDisk(db, collectionName, lf) {

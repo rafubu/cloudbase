@@ -15,7 +15,11 @@ export default function updateCache( db, collection, key, data, action ) {
         }
       } else {
         if (action !== ACTIONS.DELETE) {
-          CloudLocalbase.cache[db][collection].push(data);
+          if(action === ACTIONS.UPDATE){
+            CloudLocalbase.cache[db][collection].push(data.newDocument);
+          }else {
+            CloudLocalbase.cache[db][collection].push(data);
+          }
         }
       }
 }

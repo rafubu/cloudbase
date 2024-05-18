@@ -1,7 +1,8 @@
 import { Peer } from 'peerjs';
 import received from './received';
 import openPeer from './openPeer';
-import Log from './logger'
+import { agruparPorKey } from './utils/array';
+import { compareObjects } from '../localbase/api-utils/compareObject';
 
 export default class Cloud {
   #resolverPromesa = null;
@@ -67,36 +68,31 @@ export default class Cloud {
         this.#resolverPromesa();
       });
       this.peer.on('connection', (conn) => {
-        Log.log('connection', conn.peer);
         this.connecciones = this.connecciones.filter(conn => conn.peer !== conn.peer);
         this.connecciones.push(conn);
 
         conn.on('data', received);
 
         conn.on('close', () => {
-          Log.log('close', conn.peer);
           this.connecciones = this.connecciones.filter(conn => conn.peer !== conn.peer);
         });
       });
 
       this.peer.on('error', (error) => {
 
-        Log.error('[CLOUD ] name: '+error.name+', message: '+ error.message+', type: '+ error.type);
+        console.warn('[CLOUD ] name: ' + error.name + ', message: ' + error.message + ', type: ' + error.type);
 
         if (error.type === 'network') {
           this.Localbase.iDB.setItem('last_coneccion', this.Localbase.uid());
-          Log.warn('network');
           this.#resolverPromesa();
         }
 
         if (error.type === 'unavailable-id') {
-          Log.warn('unavailable-id');
           this.Localbase.iDB.setItem('last_coneccion', this.Localbase.uid());
           this.#resolverPromesa();
         }
 
         if (error.type === 'peer-unavailable') {
-          Log.warn('peer-unavailable');
           this.connecciones = this.connecciones.filter(conn => conn.open);
           this.Localbase.iDB.setItem('peers', JSON.stringify(this.connecciones.map(conn => ({ nodeId: conn.peer, label: conn.label }))));
           return
@@ -128,9 +124,11 @@ export default class Cloud {
   }
 
   async read(query) {
+    const data = await this.Localbase.read(query);
     const peersConectados = this.connecciones.filter(conn => conn.open);
     const results = {};
-    return new Promise(async (resolve, reject) => {
+    results[this.peer.id] = data;
+    const resultados = await new Promise(async (resolve, reject) => {
       for (const conn of peersConectados) {
         await new Promise((res, rej) => {
           setTimeout(() => rej('timeout'), 10000);
@@ -145,8 +143,39 @@ export default class Cloud {
       }
       resolve(results);
     });
-  }
 
+    let resolver = [];
+    for (const key in resultados) {
+      const result = resultados[key];
+      if (result instanceof Array) {
+        resolver = resolver.concat(result);
+      }else {
+        resolver.push(result);
+      }
+    }
+    console.log('resolver', resolver);
+    const agrupados = agruparPorKey(resolver, '_id');
+
+    const resultadosFinales = [];
+    for (const key in agrupados) {
+      const grupo = agrupados[key];
+      if (grupo.length > 1) {
+        const resolvedObject = grupo.reduce((prev, current) => {
+          return compareObjects(prev, current) > 0 ? prev : current;
+        });
+        resultadosFinales.push(resolvedObject);
+      }else {
+        resultadosFinales.push(grupo[0]);
+      }
+    }
+    if (resultadosFinales.length === 0) {
+      return null;
+    }else if (resultadosFinales.length === 1) {
+      return resultadosFinales[0];
+    }else {
+      return resultadosFinales;
+    }
+  }
 
   myId() {
     return Cloud.intance.peer.id;
@@ -169,18 +198,19 @@ export default class Cloud {
       try {
         const cone = Cloud.intance.peer.connect(nodeId, { label, reliable: true });
         cone.on('error', (error) => {
-          Log.error('error cone', error);
+          console.warn('[CLOUD ] name: ' + error.name + ', message: ' + error.message + ', type: ' + error.type);
         });
         cone.on('close', () => {
-          Log.log('cone', cone.peer, cone.open);
+          console.warn('[CLOUD ] coneccion cerrada');
           Cloud.intance.connecciones = Cloud.intance.connecciones.filter(conn => conn.peer !== cone.peer);
         });
         cone.on('open', openPeer);
-  
+
         cone.on('data', received);
       } catch (error) {
-        Log.warn('coneccion error')
+        console.warn('[CLOUD ] error al conectar', error);
       }
     }
   }
+
 }

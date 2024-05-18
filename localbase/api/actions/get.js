@@ -15,95 +15,41 @@ export default function get(options = { keys: false }) {
     let orderByProperty = this.orderByProperty
     let orderByDirection = this.orderByDirection
     let limitBy = this.limitBy
-    let containsProperty = this.containsProperty
-    let containsValue = this.containsValue
-    let containsExact = this.containsExact
-    let containsSinError = this.containsSinError
-    let whereArguments = this.whereArguments
-    const cuantosWhere = whereArguments.length
-    if(cuantosWhere > 10 ) throw new Error('No se pueden usar mas de 10 where en una consulta')
-
+    let page = this.currentPage
+    let porPag = this.porPag
     let logMessage
     let collection = [];
    
     return readFromCacheOrDisk({db:this.dbName, collectionName, lf:this.lf},(value, key) => {
   
       const data = value.data || value;
+      
       let collectionItem = {}
       if (!options.keys) {
-        collectionItem = data
+        collectionItem = this.noChange ? value : data
       }
       else {
         collectionItem = {
           key: key,
-          data:data
+          data: this.noChange ? value : data
         }
       }
       logMessage = `Got "${ collectionName }" collection`
-      if(containsProperty){
-        let valor = data[containsProperty]
-        try {
-          if(typeof valor !== undefined){
-            if( typeof valor === 'boolean' && typeof containsValue === 'boolean'){
-              if(valor === containsValue) {
-                collection.push(collectionItem);
-              }
-            }else if(typeof valor === 'string' && typeof containsValue === 'string'){
-  
-              const val = String(valor).toLowerCase()
-              const cVal = String(containsValue).toLowerCase();
-  
-              if (!containsExact){
-                if(containsSinError && val.includes(cVal)){
-                  collection.push(collectionItem)
-                }else {
-                  const search = single(cVal, val);
-                  if(search){
-                    collection.push(collectionItem)
-                  }
-                } 
-              } else if(val === cVal) collection.push(collectionItem);
-  
-              if(limitBy){
-                if(collection.length > (limitBy + 10 )) {
-                  logMessage += `, limited to contains is ${ limitBy } `
-                  return collection
-                }
-              }
-  
-            }else if(typeof valor === 'number' && typeof containsValue === 'number'){
-              if(valor === containsValue) collection.push(collectionItem)
-            }
-            logMessage += `, contains: "${ containsValue }" in "${containsProperty}"`
-          }
-        } catch (error) {
-          this.userErrors.push(`Constain():${error.message}`)
-        }
-      }else if(typeof data === 'object' && cuantosWhere){
-        cumpleCriterios.call(this,data) && collection.push(collectionItem)
-        if(limitBy){
-          if(collection.length > (limitBy + 10 )) {
-            logMessage += `, limited to contains is ${ limitBy } `
-            return collection
-          }
-        }
+      if(typeof data === 'object'){
+        cumpleCriterios.call(this,data) && collection.push(collectionItem);
       }
-      else {
-        collection.push(collectionItem)
-      }
-
     }).then(() => {
       // orderBy
       if (orderByProperty) {
         logMessage += `, ordered by "${ orderByProperty }"`
         if (!options.keys) {
           collection.sort((a, b) => {
-            return a[orderByProperty].toString().localeCompare(b[orderByProperty].toString())
+            return this.noChange ? a.data[orderByProperty].toString().localeCompare(b.data[orderByProperty].toString()) : a[orderByProperty].toString().localeCompare(b[orderByProperty].toString())
           })
         }
         else {
           collection.sort((a, b) => {
-            return a.data[orderByProperty].toString().localeCompare(b.data[orderByProperty].toString())
+            return this.noChange ? a.data.data[orderByProperty].toString().localeCompare(b.data.data[orderByProperty].toString()): a.data[orderByProperty].toString().localeCompare(b.data[orderByProperty].toString())
           })
         }
       }
@@ -111,11 +57,21 @@ export default function get(options = { keys: false }) {
         logMessage += ` (descending)`
         collection.reverse()
       }
+
+      // pagination
+      if (porPag < Infinity) {
+        let start = (page - 1) * porPag
+        let end = start + porPag
+        collection = collection.slice(start, end)
+        logMessage += `, page ${ page }`
+      }
+
       // limit
       if (limitBy) {
         logMessage += `, limited to ${ limitBy }`
         collection = collection.splice(0,limitBy)
       }
+
       logMessage += `:`
       logger.log.call(this, logMessage, collection)
       reset.call(this)
@@ -135,7 +91,7 @@ export default function get(options = { keys: false }) {
     this.getDocumentByCriteria = () => {
 
       return readFromCacheOrDisk({ db:this.dbName, collectionName, lf:this.lf },(value, key) => {
-        const data = value.data || value;
+        const data = this.noChange ? value : value.data || value
         if (isSubset(data, docSelectionCriteria)) {
           collection.push(data)
         }

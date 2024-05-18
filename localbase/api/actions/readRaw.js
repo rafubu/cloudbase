@@ -9,6 +9,7 @@ export async function readRaw(data){
   const { db, collection, key, action, data: payload } = data;
   const localDb = new CloudLocalbase(db);
   localDb.noChange = true;
+  localDb.config.debug = false;
 
   if (action === ACTIONS.GET) {
     if (!key) return await localDb.collection(collection).doc(payload).get();
@@ -19,6 +20,10 @@ export async function readRaw(data){
     return await localDb.collection(collection).where(payload).get();
   }else if(action === ACTIONS.SEARCH){
     return await localDb.collection(collection).search(payload);
+  }else if(action === ACTIONS.COUNT){
+    if(payload && typeof payload === 'object'){
+      return await localDb.collection(collection).where(payload).count();
+    }
+    return await localDb.collection(collection).count();
   }
-
 }

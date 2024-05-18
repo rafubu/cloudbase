@@ -1,5 +1,4 @@
 import localForage from "localforage";
-
 export default function collection(collectionName) {
   if (!collectionName) {
     this.userErrors.push('No collection name specified in collection() method.')

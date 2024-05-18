@@ -14,26 +14,48 @@ import searchStringInObject from '../../api-utils/StringInObject.js'
 export default function update(docUpdates) {
   let collectionName = this.collectionName
   let docSelectionCriteria = this.docSelectionCriteria
-  let whereArguments = this.whereArguments
   let nodeId = this.nodeId
-  const cuantosWhere = whereArguments.length
-  if (cuantosWhere > 10) throw new Error('No se pueden usar mas de 10 where en una consulta')
+  let whereCount = this.whereCount;
 
   return new Promise((resolve, reject) => {
 
+    this.actualizarDataDefault = (documento) => {
+      documento.updatedAt = Date.now();
+
+
+      if (documento._prepared_) {
+        documento._prepared_ = prepare(searchStringInObject(documento.data));
+      }
+
+      if (nodeId) {
+        documento.nodeId = nodeId;
+        if (documento.clock) {
+          if (documento.clock[nodeId]) {
+            documento.clock[nodeId]++;
+          } else {
+            documento.clock[nodeId] = 1;
+          }
+        }
+      }
+      return documento;
+    }
+
     // update document by criteria
-    this.updateDocumentByCriteria = (isWhere = false) => {
+    this.updateDocumentByCriteria = () => {
       let docsToUpdate = []
       this.lf[collectionName].iterate((value, key) => {
-        let oldDocument = value;
-        const dataAUpdated = isValidFuntionAnExecute.call(this,docUpdates, oldDocument);
-        if (!isWhere) {
+        const oldDocument = JSON.parse(JSON.stringify(value));
+        const oldData = JSON.parse(JSON.stringify(value.data || {}));
+        const dataAUpdated = isValidFuntionAnExecute.call(this, docUpdates, oldData);
+        if (whereCount === 0) {
           if (isSubset(dataAUpdated, docSelectionCriteria)) {
-            let newDocument = updateObject(value, dataAUpdated)
+            const newData = updateObject(oldData, dataAUpdated);
+            const newDocument = this.actualizarDataDefault({ ...oldDocument, data: newData });
             docsToUpdate.push({ key, newDocument, oldDocument })
           }
-        } else if (cumpleCriterios.call(this, value)) {
-          let newDocument = updateObject(value, dataAUpdated)
+        } else if (cumpleCriterios.call(this, oldData)) {
+          const newData = updateObject(oldData, dataAUpdated);
+          const newDocument = this.actualizarDataDefault({ ...oldDocument, data: newData });
           docsToUpdate.push({ key, newDocument, oldDocument })
         }
       }).then(() => {
@@ -79,24 +101,12 @@ export default function update(docUpdates) {
     this.updateDocumentByKey = () => {
       let docToUpdate = { key: docSelectionCriteria, }
       this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
-        docToUpdate.oldDocument = value;
-        const dataAUpdated = isValidFuntionAnExecute.call( this, docUpdates, docToUpdate.oldDocument.data);
-        
-        docToUpdate.newDocument = { ...value, data: updateObject(JSON.parse(JSON.stringify( docToUpdate.oldDocument.data )), dataAUpdated)}
+        docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));
 
-        docToUpdate.newDocument.updatedAt = Date.now();
+        const oldData = JSON.parse(JSON.stringify(value.data || {}));
+        const newData = isValidFuntionAnExecute.call(this, docUpdates, oldData);
 
-        if(docToUpdate.newDocument.clock){
-          if(docToUpdate.newDocument.clock[nodeId]){
-            docToUpdate.newDocument.clock[nodeId]++;
-          }else {
-            docToUpdate.newDocument.clock[nodeId] = 1;
-          }
-        }
-
-        if(docToUpdate.newDocument._prepared_){
-          docToUpdate.newDocument._prepared_ = prepare(searchStringInObject(docToUpdate.newDocument.data));
-        }
+        docToUpdate.newDocument = this.actualizarDataDefault({ ...value, data: updateObject(oldData, newData) });
 
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument)
 
@@ -123,23 +133,25 @@ export default function update(docUpdates) {
     this.updateDocumentByKeyCloud = () => {
       let docToUpdate = { key: docSelectionCriteria, }
       this.lf[collectionName].getItem(docSelectionCriteria).then(value => {
-        
-        if(docUpdates.clock){
-          if(docUpdates.clock[nodeId]){
+
+        if (docUpdates.clock) {
+          if (docUpdates.clock[nodeId]) {
             docUpdates.clock[nodeId]++;
-          }else {
+          } else {
             docUpdates.clock[nodeId] = 1;
           }
         }
 
-      const dbResult = [ value, docUpdates ];
+        const dbResult = [value, docUpdates];
 
-      // Resolver conflictos y obtener el objeto más reciente
-      const resolvedObject = dbResult.reduce((prev, current) => {
-        return compareObjects(prev, current) > 0 ? prev : current;
-      });
+        // Resolver conflictos y obtener el objeto más reciente
+        const resolvedObject = dbResult.reduce((prev, current) => {
+          return compareObjects(prev, current) > 0 ? prev : current;
+        });
 
-        docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));        
+        resolvedObject.nodeId = nodeId;
+
+        docToUpdate.oldDocument = JSON.parse(JSON.stringify(value));
         docToUpdate.newDocument = JSON.parse(JSON.stringify(resolvedObject));
 
         this.lf[collectionName].setItem(docSelectionCriteria, docToUpdate.newDocument)
@@ -171,18 +183,17 @@ export default function update(docUpdates) {
       this.userErrors.push('Data passed to .update() must be an object. Not an array, string, number or boolean.')
     }
 
+    
     if (!this.userErrors.length) {
       if (typeof docSelectionCriteria == 'object') {
-        if (docSelectionCriteria !== null) {
+        if (docSelectionCriteria !== null || this.whereCount > 0) {
           this.updateDocumentByCriteria()
-        } else if (cuantosWhere) {
-          this.updateDocumentByCriteria(true)
         }
       }
       else {
-        if(this.noChange){
+        if (this.noChange) {
           this.updateDocumentByKeyCloud()
-        }else {
+        } else {
           this.updateDocumentByKey()
         }
       }
