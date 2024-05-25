@@ -9,8 +9,9 @@ export default function where(whereSelectionCriteria) {
     this.userErrors.push('Where criteria specified in where() method must not be an array. Use object (with criteria) e.g. { id: 1 }')
   } else if (this.whereArguments.length > 10) {
     this.userErrors.push('You can only have 10 where clauses')
+  }else {
+    this.whereArguments.push(whereSelectionCriteria);
+    this.whereCount = this.whereArguments.length;
   }
-  this.whereArguments.push(whereSelectionCriteria);
-  this.whereCount = this.whereArguments.length;
   return this
 }

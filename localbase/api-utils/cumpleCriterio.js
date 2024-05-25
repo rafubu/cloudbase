@@ -1,4 +1,5 @@
 import { single } from 'fuzzysort'
+
 function sonStrings(valor1, valor2) {
   return (typeof valor1 === 'string' && typeof valor2 === 'string');
 }

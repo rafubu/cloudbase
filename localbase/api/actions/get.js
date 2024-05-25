@@ -4,7 +4,6 @@ import reset from '../../api-utils/reset.js'
 import selectionLevel from '../../api-utils/selectionLevel.js'
 import showUserErrors from '../../api-utils/showUserErrors.js'
 import cumpleCriterios from '../../api-utils/cumpleCriterio.js'
-import { single } from 'fuzzysort'
 import { readFromCacheOrDisk } from '../../api-utils/readFromCaheOrDisk.js'
 
 export default function get(options = { keys: false }) {
