@@ -20,8 +20,6 @@ export default class Cloud {
     Localbase.isCloud = true;
 
     if (!this.config) throw new Error('Configuracion no definida');
-    if (!this.config.key) throw new Error('ApiKey no definido');
-    if (!this.config.host) throw new Error('host no definido');
     if (!this.config.debug) this.config.debug = 0;
 
     this.promesaConexion = new Promise((resolve, reject) => {

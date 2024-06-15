@@ -12,7 +12,6 @@
   "author": "Danny Connell",
   "license": "MIT",
   "dependencies": {
-    "client-localbase": "link:client-localbase",
     "fuzzysort": "^2.0.1",
     "localforage": "^1.7.4",
     "mitt": "^3.0.1",

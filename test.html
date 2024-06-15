@@ -14,8 +14,7 @@
 
     import { Cloud, Localbase } from './out/index.js';
 
-
-    const cloud = new Cloud({ key: 'rafita', host: 'peer.app-re.online' }, Localbase);
+    const cloud = new Cloud( {}, Localbase );
     await cloud.init();
 
     const db = new Localbase('tested');
